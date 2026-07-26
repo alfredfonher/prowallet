@@ -124,15 +124,15 @@ docker compose logs api | grep -i "migration"
 ### API (docker-compose.yaml)
 
 - `NODE_ENV=production`
-- `DATABASE_URL=postgresql://postgres:prowallet_secure_password_123@postgres:5432/prowallet`
-- `JWT_SECRET=9f3c1a8e6b2d4f709c8a5e1d3b7f2a4c`
-- `HELIUS_API_KEY=97cdbcf5-714f-4e61-b355-93368a279e34`
+- `DATABASE_URL=postgresql://postgres:<PASSWORD>@postgres:5432/prowallet`
+- `JWT_SECRET=<JWT_SECRET>`
+- `HELIUS_API_KEY=<HELIUS_API_KEY>`
 - All other vars hardcoded (100+ total)
 
 ### Web (docker-compose.yaml)
 
 - `NEXT_PUBLIC_API_URL=https://servicioshilda.orioncaribe.com/api/v1`
-- `NEXT_PUBLIC_HELIUS_API_KEY=97cdbcf5-714f-4e61-b355-93368a279e34`
+- `NEXT_PUBLIC_HELIUS_API_KEY=<HELIUS_API_KEY>`
 - All other public vars hardcoded
 
 ## ⚠️ Important Notes

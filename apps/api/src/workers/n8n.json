@@ -21,11 +21,11 @@
                     "headerParameters": [
                         {
                             "name": "X-API-Key",
-                            "value": "d13b1cd817ed8c58c2fd71aa368cbcea82ae8896a19b9a569f8a5fdd469d"
+                            "value": "<API_KEY>"
                         },
                         {
                             "name": "Authorization",
-                            "value": "Bearer d13b1cd817ed8c58c2fd71aa368cbcea82ae8896a19b9a569f8a5fdd469d"
+                            "value": "Bearer <ACCESS_TOKEN>"
                         },
                         {
                             "name": "Accept",

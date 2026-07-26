@@ -209,7 +209,7 @@ docker-compose.yaml
 
 // Solana Mainnet
 SOLANA_NETWORK: mainnet-beta
-SOLANA_RPC_URL: https://mainnet.helius-rpc.com/?api-key=97cdbcf5-714f-4e61-b355-93368a279e34
+SOLANA_RPC_URL: https://mainnet.helius-rpc.com/?api-key=<HELIUS_API_KEY>
 
 // ProWallet Token
 TOKEN_MINT: D8TwbwGGmyucrxPB9uscait27caVgeqYHPpyN3XXjUX3
@@ -221,7 +221,7 @@ PLATFORM_FEE: 0.000005 SOL
 BALANCE_BUFFER: 0.00001 SOL
 
 // Database
-DATABASE_URL: postgresql://postgres:prowallet_secure_password_123@postgres:5432/prowallet
+DATABASE_URL: postgresql://postgres:<PASSWORD>@postgres:5432/prowallet
 REDIS: redis:6379
 
 ```

@@ -1,9 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
 import { loggerService } from "../services/logging";
-
-const JWT_SECRET =
-  process.env.JWT_SECRET || "your-secret-key-change-in-production";
+import { getRequiredEnvVar } from "../utils/env";
 
 /**
  * Middleware para validar JWT token
@@ -28,9 +26,10 @@ export function validateJWT(
     }
 
     const token = authHeader.substring(7); // "Bearer ".length = 7
+    const jwt_secret = getRequiredEnvVar("JWT_SECRET");
 
     try {
-      const decoded = jwt.verify(token, JWT_SECRET) as any;
+      const decoded = jwt.verify(token, jwt_secret) as any;
       (req as any).token = token;
       (req as any).user = decoded;
       next();
@@ -68,9 +67,10 @@ export function validateJWTOptional(
 
     if (authHeader && authHeader.startsWith("Bearer ")) {
       const token = authHeader.substring(7);
+      const jwt_secret = getRequiredEnvVar("JWT_SECRET");
 
       try {
-        const decoded = jwt.verify(token, JWT_SECRET) as any;
+        const decoded = jwt.verify(token, jwt_secret) as any;
         (req as any).token = token;
         (req as any).user = decoded;
       } catch (error) {

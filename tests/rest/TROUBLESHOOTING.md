@@ -83,7 +83,7 @@ Content-Type: application/json
 **Formato correcto:**
 
 ```rest
-Authorization: Bearer eyJhbGciOiJIUzI1NiIs...  # ✅ Correcto
+Authorization: Bearer <ACCESS_TOKEN>  # ✅ Correcto
 Authorization: eyJhbGciOiJIUzI1NiIs...         # ❌ Falta "Bearer"
 Authorization: {{@accessToken}}                 # ❌ Sin "Bearer"
 ```

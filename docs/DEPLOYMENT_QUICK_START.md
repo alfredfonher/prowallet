@@ -14,33 +14,38 @@
 ```bash
 # From project root
 cp .env.docker.example .env.docker
+```
 
-# Edit with your production secrets:
-cat > .env.docker << 'EOF'
+Edit `.env.docker`, replace every placeholder, and paste independently generated values for both JWT secrets (`openssl rand -base64 32`):
+
+```dotenv
 # Database
-DATABASE_URL=postgresql://user:password@db-host:5432/prowallet
+POSTGRES_PASSWORD=<POSTGRES_PASSWORD>
+DATABASE_URL=postgresql://user:<PASSWORD>@db-host:5432/prowallet
 
 # Solana
 SOLANA_NETWORK=mainnet-beta
-SOLANA_RPC_URL=https://mainnet.helius-rpc.com/?api-key=YOUR_HELIUS_API_KEY
-HELIUS_API_KEY=YOUR_HELIUS_API_KEY
+SOLANA_RPC_URL=https://mainnet.helius-rpc.com/?api-key=<HELIUS_API_KEY>
+HELIUS_API_KEY=<HELIUS_API_KEY>
 
 # Wallets
 TREASURY_PRIVATE_KEY=YOUR_BASE58_PRIVATE_KEY
 TREASURY_PUBLIC_KEY=EizJ7W8AbhUAPdSjdEjyKJDEmk7MSJnR6JfH2h2gitLH
-JWT_SECRET=$(openssl rand -base64 32)
+AUTHORITY_KEYPAIR_HOST_PATH=/absolute/host/path/to/ignored-authority-keypair.json
+JWT_SECRET=<GENERATED_JWT_SECRET>
+JWT_REFRESH_SECRET=<GENERATED_JWT_REFRESH_SECRET>
 
 # Frontend URLs
 NEXT_PUBLIC_ENVIRONMENT=production
-NEXT_PUBLIC_API_URL=https://servicioshilda.orioncaribe.com/api/v1
-NEXT_PUBLIC_HELIUS_API_KEY=YOUR_HELIUS_API_KEY
+NEXT_PUBLIC_API_URL_LOCAL=http://localhost:3005/api/v1
+NEXT_PUBLIC_API_URL_CLOUD=https://servicioshilda.orioncaribe.com/api/v1
+NEXT_PUBLIC_HELIUS_API_KEY=<HELIUS_API_KEY>
 NEXT_PUBLIC_SOLANA_NETWORK=mainnet-beta
-NEXT_PUBLIC_SOLANA_RPC_URL=https://mainnet.helius-rpc.com/?api-key=YOUR_HELIUS_API_KEY
+NEXT_PUBLIC_SOLANA_RPC_URL=https://mainnet.helius-rpc.com/?api-key=<HELIUS_API_KEY>
 NEXT_PUBLIC_PROWALLET_PROGRAM_ID=7sa2XazRU4R6DcsNLGMWcX4nabCzWwjj3Awfh1gxhtem
 
 # CORS - Critical for frontend to reach API
 ALLOWED_ORIGINS=https://exchange.gapstation.net,https://servicioshilda.orioncaribe.com
-EOF
 ```
 
 ### Copy to server:
@@ -79,11 +84,11 @@ chmod 600 .env.docker
 ### Build and start:
 
 ```bash
-# Build Docker images
-docker-compose build
+# Build Docker images with public browser values from .env.docker
+docker compose --env-file .env.docker build
 
 # Start containers
-docker-compose up -d --env-file .env.docker
+docker compose --env-file .env.docker up -d
 
 # Watch logs
 docker-compose logs -f
@@ -345,8 +350,8 @@ docker-compose exec api npm run db:status
 cd /opt/prowallet
 git pull origin main
 
-docker-compose build
-docker-compose up -d --env-file .env.docker
+docker compose --env-file .env.docker build
+docker compose --env-file .env.docker up -d
 ```
 
 ### Check migrations:

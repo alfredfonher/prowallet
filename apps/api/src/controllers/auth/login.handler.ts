@@ -4,6 +4,7 @@ import { loggerService } from "../../services/logging/logger.service";
 import { StatusFlow, StatusFlowCodes } from "status-flow";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
+import { getRequiredEnvVar } from "../../utils/env";
 import {
   validar_email,
   validar_password,
@@ -12,8 +13,6 @@ import {
   obtener_error_credenciales,
 } from "./auth.validators";
 
-const JWT_SECRET =
-  process.env.JWT_SECRET || "default-secret-change-in-production";
 const TOKEN_EXPIRY = "24h";
 
 /**
@@ -101,7 +100,7 @@ export const login_handler = async (
         is_admin: es_admin(email),
         iat: Math.floor(Date.now() / 1000),
       },
-      JWT_SECRET,
+      getRequiredEnvVar("JWT_SECRET"),
       { expiresIn: TOKEN_EXPIRY },
     );
 

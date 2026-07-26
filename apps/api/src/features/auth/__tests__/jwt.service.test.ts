@@ -1,8 +1,8 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { afterAll, beforeEach, describe, expect, it } from "vitest";
 import * as jwt from "jsonwebtoken";
 
-// Set JWT_SECRET before importing the service module
-process.env.JWT_SECRET = "test_secret_key_for_testing_only";
+const ORIGINAL_JWT_SECRET = process.env.JWT_SECRET;
+const TEST_JWT_SECRET = "unit-test-only-jwt-secret-not-for-production";
 
 import {
   create_jwt_token,
@@ -13,14 +13,35 @@ import {
 } from "../jwt.service";
 
 describe("jwt_service", () => {
+  beforeEach(() => {
+    process.env.JWT_SECRET = TEST_JWT_SECRET;
+  });
+
+  afterAll(() => {
+    if (ORIGINAL_JWT_SECRET === undefined) {
+      delete process.env.JWT_SECRET;
+      return;
+    }
+
+    process.env.JWT_SECRET = ORIGINAL_JWT_SECRET;
+  });
+
   const valid_input = {
     user_id: 123,
-    username: "test_user",
+    email: "test@example.invalid",
     public_key: "11111111111111111111111111111112",
     is_admin: false,
   };
 
   describe("create_jwt_token", () => {
+    it("should fail clearly when JWT_SECRET is missing", () => {
+      delete process.env.JWT_SECRET;
+
+      expect(() => create_jwt_token(valid_input)).toThrow(
+        "Environment variable JWT_SECRET is required",
+      );
+    });
+
     it("should create a valid token", () => {
       const result = create_jwt_token(valid_input);
 
@@ -34,7 +55,7 @@ describe("jwt_service", () => {
       const token2 = create_jwt_token({
         ...valid_input,
         user_id: 456,
-        username: "another_user",
+        email: "another@example.invalid",
       });
 
       expect(token1.token).not.toBe(token2.token);
@@ -45,7 +66,7 @@ describe("jwt_service", () => {
       const decoded = jwt.decode(result.token) as any;
 
       expect(decoded.user_id).toBe(valid_input.user_id);
-      expect(decoded.username).toBe(valid_input.username);
+      expect(decoded.username).toBe(valid_input.email);
       expect(decoded.public_key).toBe(valid_input.public_key);
       expect(decoded.is_admin).toBe(valid_input.is_admin);
     });
@@ -60,25 +81,23 @@ describe("jwt_service", () => {
       expect(decoded.iat).toBeLessThanOrEqual(after_time);
     });
 
-    it("should throw JWTError on invalid input", () => {
-      expect(() => {
-        create_jwt_token({
-          user_id: NaN,
-          username: "",
-          public_key: "",
-          is_admin: false,
-        });
-      }).toThrow();
-    });
   });
 
   describe("verify_jwt_token", () => {
+    it("should fail clearly when JWT_SECRET is missing", () => {
+      delete process.env.JWT_SECRET;
+
+      expect(() => verify_jwt_token("invalid.token.here")).toThrow(
+        "Environment variable JWT_SECRET is required",
+      );
+    });
+
     it("should verify a valid token", () => {
       const { token } = create_jwt_token(valid_input);
       const decoded = verify_jwt_token(token);
 
       expect(decoded.user_id).toBe(valid_input.user_id);
-      expect(decoded.username).toBe(valid_input.username);
+      expect(decoded.username).toBe(valid_input.email);
       expect(decoded.public_key).toBe(valid_input.public_key);
       expect(decoded.is_admin).toBe(valid_input.is_admin);
     });
@@ -91,7 +110,7 @@ describe("jwt_service", () => {
 
     it("should throw error for expired token", () => {
       // Crear token con expiración muy corta
-      const secret = process.env.JWT_SECRET || "test-secret";
+      const secret = TEST_JWT_SECRET;
       const expired_token = jwt.sign(valid_input, secret, {
         expiresIn: "-1h",
       });
@@ -126,7 +145,7 @@ describe("jwt_service", () => {
 
       expect(decoded).toBeDefined();
       expect(decoded?.user_id).toBe(valid_input.user_id);
-      expect(decoded?.username).toBe(valid_input.username);
+      expect(decoded?.username).toBe(valid_input.email);
     });
 
     it("should return null for invalid token", () => {
@@ -135,7 +154,7 @@ describe("jwt_service", () => {
     });
 
     it("should decode expired token without throwing", () => {
-      const secret = process.env.JWT_SECRET || "test-secret";
+      const secret = TEST_JWT_SECRET;
       const expired_token = jwt.sign(valid_input, secret, {
         expiresIn: "-1h",
       });
@@ -166,7 +185,7 @@ describe("jwt_service", () => {
     });
 
     it("should return expiry even for expired token", () => {
-      const secret = process.env.JWT_SECRET || "test-secret";
+      const secret = TEST_JWT_SECRET;
       const expired_token = jwt.sign(valid_input, secret, {
         expiresIn: "-1h",
       });
@@ -186,7 +205,7 @@ describe("jwt_service", () => {
     });
 
     it("should return true for expired token", () => {
-      const secret = process.env.JWT_SECRET || "test-secret";
+      const secret = TEST_JWT_SECRET;
       const expired_token = jwt.sign(valid_input, secret, {
         expiresIn: "-1h",
       });

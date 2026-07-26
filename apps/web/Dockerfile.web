@@ -19,6 +19,26 @@ RUN pnpm install --frozen-lockfile
 # Step 5: Copiar el resto del código fuente
 COPY . .
 
+# Public build configuration. NEXT_PUBLIC_* values are embedded in the browser bundle.
+ARG NEXT_PUBLIC_ENVIRONMENT=local
+ARG NEXT_PUBLIC_API_URL_LOCAL=http://localhost:3005/api/v1
+ARG NEXT_PUBLIC_API_URL_CLOUD=https://servicioshilda.orioncaribe.com/api/v1
+ARG NEXT_PUBLIC_SOLANA_NETWORK=devnet
+ARG NEXT_PUBLIC_SOLANA_RPC_URL=https://api.devnet.solana.com
+ARG NEXT_PUBLIC_FALLBACK_SOLANA_RPC_URL=https://api.devnet.solana.com
+ARG NEXT_PUBLIC_HELIUS_API_KEY=
+ARG NEXT_PUBLIC_PROWALLET_PROGRAM_ID=
+ARG NEXT_PUBLIC_TOKEN_MINT=
+ENV NEXT_PUBLIC_ENVIRONMENT=$NEXT_PUBLIC_ENVIRONMENT
+ENV NEXT_PUBLIC_API_URL_LOCAL=$NEXT_PUBLIC_API_URL_LOCAL
+ENV NEXT_PUBLIC_API_URL_CLOUD=$NEXT_PUBLIC_API_URL_CLOUD
+ENV NEXT_PUBLIC_SOLANA_NETWORK=$NEXT_PUBLIC_SOLANA_NETWORK
+ENV NEXT_PUBLIC_SOLANA_RPC_URL=$NEXT_PUBLIC_SOLANA_RPC_URL
+ENV NEXT_PUBLIC_FALLBACK_SOLANA_RPC_URL=$NEXT_PUBLIC_FALLBACK_SOLANA_RPC_URL
+ENV NEXT_PUBLIC_HELIUS_API_KEY=$NEXT_PUBLIC_HELIUS_API_KEY
+ENV NEXT_PUBLIC_PROWALLET_PROGRAM_ID=$NEXT_PUBLIC_PROWALLET_PROGRAM_ID
+ENV NEXT_PUBLIC_TOKEN_MINT=$NEXT_PUBLIC_TOKEN_MINT
+
 # Step 6: Build del web
 RUN pnpm --filter exchange-web-ui build
 
@@ -36,37 +56,10 @@ ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV PORT=3000
 
-# ============================================================================
-# ENVIRONMENT CONFIGURATION
-# ============================================================================
-# Explicit environment declaration for production
-# ⭐ CRITICAL: Controls which API URL is used
-# Values: "local" (localhost) or "production" (cloud API)
-ENV NEXT_PUBLIC_ENVIRONMENT=production
-
-# Solana mainnet config (Helius RPC)
-ENV NEXT_PUBLIC_SOLANA_NETWORK=mainnet-beta
-ENV NEXT_PUBLIC_SOLANA_RPC_URL=https://mainnet.helius-rpc.com/?api-key=97cdbcf5-714f-4e61-b355-93368a279e34
-ENV NEXT_PUBLIC_FALLBACK_SOLANA_RPC_URL=https://api.rpcpool.com
-ENV NEXT_PUBLIC_PROWALLET_PROGRAM_ID=7sa2XazRU4R6DcsNLGMWcX4nabCzWwjj3Awfh1gxhtem
-
-# Helius API endpoints (for frontend transaction parsing)
-ENV NEXT_PUBLIC_HELIUS_API_KEY=97cdbcf5-714f-4e61-b355-93368a279e34
-ENV NEXT_PUBLIC_HELIUS_PARSE_TRANSACTION_URL=https://api-mainnet.helius-rpc.com/v0/transactions/?api-key=97cdbcf5-714f-4e61-b355-93368a279e34
-ENV NEXT_PUBLIC_HELIUS_PARSE_HISTORY_URL=https://api-mainnet.helius-rpc.com/v0/addresses/{address}/transactions/?api-key=97cdbcf5-714f-4e61-b355-93368a279e34
-
-# Token config (public - from local development)
-ENV NEXT_PUBLIC_TOKEN_MINT=D8TwbwGGmyucrxPB9uscait27caVgeqYHPpyN3XXjUX3
+# Public token display configuration
 ENV NEXT_PUBLIC_TOKEN_NAME=ProWallet
 ENV NEXT_PUBLIC_TOKEN_SYMBOL=GAPC
 ENV NEXT_PUBLIC_TEST_MODE_FREE_TOKEN=false
-
-# API config - MUST be set at runtime via .env.docker
-# This tells frontend where to call the backend API
-ENV NEXT_PUBLIC_API_URL=https://servicioshilda.orioncaribe.com/api/v1
-
-# Helius API Key for transaction parsing (MUST be set at runtime via .env.docker)
-ENV NEXT_PUBLIC_HELIUS_API_KEY=97cdbcf5-714f-4e61-b355-93368a279e34
 
 WORKDIR /app/apps/web
 

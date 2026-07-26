@@ -1,5 +1,7 @@
 # Docker Hardcoding Summary
 
+> **ARCHIVED: DO NOT FOLLOW THESE INSTRUCTIONS.** Credential values are redacted, and current Compose requires `.env.docker` plus an external read-only authority keypair mount.
+
 ## 🎯 What We Did
 
 We replaced **ALL environment variable substitutions** (`${VARIABLE}`) in `docker-compose.yaml` with **hardcoded values** extracted from the Dockerfiles. This eliminates the need for external `.env.docker` files and makes Docker setup straightforward.
@@ -12,7 +14,7 @@ We replaced **ALL environment variable substitutions** (`${VARIABLE}`) in `docke
 
 - `POSTGRES_DB`: `prowallet` (was: `${POSTGRES_DB:-prowallet}`)
 - `POSTGRES_USER`: `postgres` (was: `${POSTGRES_USER:-postgres}`)
-- `POSTGRES_PASSWORD`: `prowallet_secure_password_123` (was: `${POSTGRES_PASSWORD:-change_me_in_production}`)
+- `POSTGRES_PASSWORD`: `<POSTGRES_PASSWORD>` (formerly sourced from an environment fallback)
 
 #### Web Service (Next.js Frontend)
 
@@ -23,12 +25,12 @@ All `NEXT_PUBLIC_*` variables now hardcoded:
 - `PORT`: `3000`
 - `NEXT_PUBLIC_ENVIRONMENT`: `production`
 - `NEXT_PUBLIC_SOLANA_NETWORK`: `mainnet-beta`
-- `NEXT_PUBLIC_SOLANA_RPC_URL`: `https://mainnet.helius-rpc.com/?api-key=97cdbcf5-714f-4e61-b355-93368a279e34`
+- `NEXT_PUBLIC_SOLANA_RPC_URL`: `https://mainnet.helius-rpc.com/?api-key=<HELIUS_API_KEY>`
 - `NEXT_PUBLIC_FALLBACK_SOLANA_RPC_URL`: `https://api.rpcpool.com`
 - `NEXT_PUBLIC_PROWALLET_PROGRAM_ID`: `7sa2XazRU4R6DcsNLGMWcX4nabCzWwjj3Awfh1gxhtem`
-- `NEXT_PUBLIC_HELIUS_API_KEY`: `97cdbcf5-714f-4e61-b355-93368a279e34`
-- `NEXT_PUBLIC_HELIUS_PARSE_TRANSACTION_URL`: `https://api-mainnet.helius-rpc.com/v0/transactions/?api-key=97cdbcf5-714f-4e61-b355-93368a279e34`
-- `NEXT_PUBLIC_HELIUS_PARSE_HISTORY_URL`: `https://api-mainnet.helius-rpc.com/v0/addresses/{address}/transactions/?api-key=97cdbcf5-714f-4e61-b355-93368a279e34`
+- `NEXT_PUBLIC_HELIUS_API_KEY`: `<HELIUS_API_KEY>`
+- `NEXT_PUBLIC_HELIUS_PARSE_TRANSACTION_URL`: `https://api-mainnet.helius-rpc.com/v0/transactions/?api-key=<HELIUS_API_KEY>`
+- `NEXT_PUBLIC_HELIUS_PARSE_HISTORY_URL`: `https://api-mainnet.helius-rpc.com/v0/addresses/{address}/transactions/?api-key=<HELIUS_API_KEY>`
 - `NEXT_PUBLIC_TOKEN_MINT`: `D8TwbwGGmyucrxPB9uscait27caVgeqYHPpyN3XXjUX3`
 - `NEXT_PUBLIC_TOKEN_NAME`: `ProWallet`
 - `NEXT_PUBLIC_TOKEN_SYMBOL`: `GAPC`
@@ -42,19 +44,19 @@ All variables now hardcoded from Dockerfile defaults:
 
 - `NODE_ENV`: `production`
 - `PORT`: `3001`
-- `DATABASE_URL`: `postgresql://postgres:prowallet_secure_password_123@postgres:5432/prowallet`
+- `DATABASE_URL`: `postgresql://postgres:<PASSWORD>@postgres:5432/prowallet`
 
 **Solana Configuration:**
 
 - `SOLANA_NETWORK`: `mainnet-beta`
-- `SOLANA_RPC_URL`: `https://mainnet.helius-rpc.com/?api-key=97cdbcf5-714f-4e61-b355-93368a279e34`
+- `SOLANA_RPC_URL`: `https://mainnet.helius-rpc.com/?api-key=<HELIUS_API_KEY>`
 - `FALLBACK_SOLANA_RPC_URL`: `https://api.rpcpool.com`
 
 **Helius API:**
 
-- `HELIUS_API_KEY`: `97cdbcf5-714f-4e61-b355-93368a279e34`
-- `HELIUS_PARSE_TRANSACTION_URL`: `https://api-mainnet.helius-rpc.com/v0/transactions/?api-key=97cdbcf5-714f-4e61-b355-93368a279e34`
-- `HELIUS_PARSE_HISTORY_URL`: `https://api-mainnet.helius-rpc.com/v0/addresses/{address}/transactions/?api-key=97cdbcf5-714f-4e61-b355-93368a279e34`
+- `HELIUS_API_KEY`: `<HELIUS_API_KEY>`
+- `HELIUS_PARSE_TRANSACTION_URL`: `https://api-mainnet.helius-rpc.com/v0/transactions/?api-key=<HELIUS_API_KEY>`
+- `HELIUS_PARSE_HISTORY_URL`: `https://api-mainnet.helius-rpc.com/v0/addresses/{address}/transactions/?api-key=<HELIUS_API_KEY>`
 
 **Token Configuration:**
 
@@ -98,7 +100,7 @@ All variables now hardcoded from Dockerfile defaults:
 
 **JWT Authentication:**
 
-- `JWT_SECRET`: `9f3c1a8e6b2d4f709c8a5e1d3b7f2a4c`
+- `JWT_SECRET`: `<JWT_SECRET>`
 
 **API Configuration:**
 
@@ -201,9 +203,9 @@ refactor: hardcode all environment variables into docker-compose.yaml
 
 - Remove all ${VARIABLE} substitutions from docker-compose.yaml
 - All env vars now explicitly defined from Dockerfile defaults (web, api)
-- Database credentials hardcoded (prowallet_secure_password_123)
+- Database credentials hardcoded (<POSTGRES_PASSWORD>)
 - Helius API keys and Solana RPC endpoints hardcoded
-- JWT_SECRET hardcoded (9f3c1a8e6b2d4f709c8a5e1d3b7f2a4c)
+- JWT_SECRET hardcoded (<JWT_SECRET>)
 - All wallet addresses, token configs, and API settings hardcoded
 - Eliminates need for .env.docker file (removed from project)
 - Delete docker-setup.sh helper script (no longer needed)

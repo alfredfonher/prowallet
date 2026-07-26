@@ -20,7 +20,7 @@ DATABASE_URL="file:./dev.db"
 ### `.env.local` (Development - PostgreSQL)
 
 ```env
-DATABASE_URL="postgresql://aprog93:Fcb1899Nov29@@localhost:5432/prowallet?schema=public"
+DATABASE_URL="postgresql://aprog93:<PASSWORD>@localhost:5432/prowallet?schema=public"
 ```
 
 ---
@@ -51,7 +51,7 @@ sudo -u postgres psql
 
 # Dentro de psql:
 CREATE DATABASE prowallet;
-CREATE USER aprog93 WITH PASSWORD 'password';
+CREATE USER aprog93 WITH PASSWORD '<DATABASE_PASSWORD>';
 ALTER ROLE aprog93 SET client_encoding TO 'utf8';
 ALTER ROLE aprog93 SET default_transaction_isolation TO 'read committed';
 ALTER ROLE aprog93 SET default_transaction_deferrable TO on;
@@ -110,7 +110,7 @@ services:
 
   api:
     environment:
-      DATABASE_URL: "postgresql://aprog93:<password>@postgres:5432/prowallet?schema=public"
+      DATABASE_URL: "postgresql://aprog93:<PASSWORD>@postgres:5432/prowallet?schema=public"
 ```
 
 ---

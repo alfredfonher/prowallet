@@ -12,7 +12,6 @@ COPY package.json ./
 COPY apps/api/package.json ./apps/api/
 COPY packages/ ./packages/
 COPY apps/api/idl/prowallet_contract.json ./apps/api/idl/
-COPY apps/api/idl/prowallet.json ./apps/api/idl/
 
 # Step 3: Instalar pnpm globalmente
 RUN npm install -g pnpm@10.24.0
@@ -61,16 +60,8 @@ ENV PORT=3001
 # SOLANA_NETWORK must be one of: "mainnet-beta", "testnet", "devnet"
 # THESE SHOULD BE OVERRIDDEN AT RUNTIME with actual values from .env.docker
 ENV SOLANA_NETWORK=mainnet-beta
-ENV SOLANA_RPC_URL=https://mainnet.helius-rpc.com/?api-key=97cdbcf5-714f-4e61-b355-93368a279e34
+ENV SOLANA_RPC_URL=https://api.devnet.solana.com
 ENV FALLBACK_SOLANA_RPC_URL=https://api.rpcpool.com
-
-# ============================================================================
-# HELIUS API ENDPOINTS (for parsing transactions)
-# ============================================================================
-# THESE SHOULD BE OVERRIDDEN AT RUNTIME with actual values from .env.docker
-ENV HELIUS_API_KEY=97cdbcf5-714f-4e61-b355-93368a279e34
-ENV HELIUS_PARSE_TRANSACTION_URL=https://api-mainnet.helius-rpc.com/v0/transactions/?api-key=97cdbcf5-714f-4e61-b355-93368a279e34
-ENV HELIUS_PARSE_HISTORY_URL=https://api-mainnet.helius-rpc.com/v0/addresses/{address}/transactions/?api-key=97cdbcf5-714f-4e61-b355-93368a279e34
 
 # ============================================================================
 # TOKEN CONFIGURATION (from local development)
@@ -108,13 +99,8 @@ ENV TOKEN_ACCOUNT=DuVzGwE9waTmPHjsto3brPbFZaqMjW5AnDQEA1mK1ZZN
 ENV TREASURY_WALLET=EizJ7W8AbhUAPdSjdEjyKJDEmk7MSJnR6JfH2h2gitLH
 
 # ============================================================================
-# KEYPAIR PATHS (REQUIRED at runtime)
-# These paths are where IDL files are mounted in the container
-# The ACTUAL private key comes from .env.docker via TREASURY_PRIVATE_KEY
+# Public program artifact path. Signing material is supplied only at runtime.
 # ============================================================================
-ENV PROVIDER_WALLET=/app/apps/api/idl/prowallet.json
-ENV KEYPAIR_PATH=/app/apps/api/idl/prowallet.json
-ENV AUTHORITY_KEYPAIR_PATH=/app/apps/api/idl/prowallet.json
 ENV PROGRAM_KEYPAIR=/app/apps/api/idl/prowallet_contract.json
 
 # ============================================================================
@@ -130,12 +116,6 @@ ENV IDL_PROWALLET_DEVNET=/app/apps/api/idl/prowallet_contract.devnet.json
 # TOKEN CONFIGURATION (ALIAS for compatibility)
 # ============================================================================
 ENV TOKEN_MINT_ADDRESS=D8TwbwGGmyucrxPB9uscait27caVgeqYHPpyN3XXjUX3
-
-# ============================================================================
-# JWT AUTHENTICATION (DEVELOPMENT DEFAULT - CHANGE IN PRODUCTION)
-# ============================================================================
-# For production, this MUST be overridden with a strong random secret
-ENV JWT_SECRET=9f3c1a8e6b2d4f709c8a5e1d3b7f2a4c
 
 # ============================================================================
 # DATABASE CONFIGURATION (REQUIRED - must come from runtime)

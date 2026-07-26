@@ -24,7 +24,6 @@ export interface DecodedToken {
   exp?: number;
 }
 
-const JWT_SECRET = getRequiredEnvVar("JWT_SECRET");
 const TOKEN_EXPIRY = "24h";
 
 /**
@@ -33,6 +32,8 @@ const TOKEN_EXPIRY = "24h";
 export const create_jwt_token = (
   input: CreateTokenInput,
 ): CreateTokenResult => {
+  const jwt_secret = getRequiredEnvVar("JWT_SECRET");
+
   try {
     const token = jwt.sign(
       {
@@ -42,7 +43,7 @@ export const create_jwt_token = (
         is_admin: input.is_admin,
         iat: Math.floor(Date.now() / 1000),
       },
-      JWT_SECRET,
+      jwt_secret,
       { expiresIn: TOKEN_EXPIRY },
     );
 
@@ -63,8 +64,10 @@ export const create_jwt_token = (
  * Verifica y decodifica un JWT token
  */
 export const verify_jwt_token = (token: string): DecodedToken => {
+  const jwt_secret = getRequiredEnvVar("JWT_SECRET");
+
   try {
-    const decoded = jwt.verify(token, JWT_SECRET) as DecodedToken;
+    const decoded = jwt.verify(token, jwt_secret) as DecodedToken;
     return decoded;
   } catch (error) {
     if (error instanceof jwt.TokenExpiredError) {

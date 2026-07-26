@@ -1,5 +1,6 @@
 import jwt from "jsonwebtoken";
 import { randomBytes } from "crypto";
+import { getRequiredEnvVar } from "../../utils/env";
 
 /**
  * Token Service - Handles JWT and refresh token generation/validation
@@ -24,9 +25,6 @@ interface RefreshTokenData {
 
 const ACCESS_TOKEN_EXPIRY = "15m";
 const REFRESH_TOKEN_EXPIRY = 7 * 24 * 60 * 60; // 7 days in seconds
-const ACCESS_SECRET = process.env.JWT_SECRET || "default-secret-change";
-const REFRESH_SECRET =
-  process.env.JWT_REFRESH_SECRET || "refresh-secret-change";
 
 export class TokenService {
   /**
@@ -45,7 +43,7 @@ export class TokenService {
       iat: Math.floor(Date.now() / 1000),
     };
 
-    return jwt.sign(payload, ACCESS_SECRET, {
+    return jwt.sign(payload, getRequiredEnvVar("JWT_SECRET"), {
       expiresIn: ACCESS_TOKEN_EXPIRY,
     });
   }
@@ -63,7 +61,7 @@ export class TokenService {
       iat: Math.floor(Date.now() / 1000),
     };
 
-    return jwt.sign(payload, REFRESH_SECRET, {
+    return jwt.sign(payload, getRequiredEnvVar("JWT_REFRESH_SECRET"), {
       expiresIn: `${REFRESH_TOKEN_EXPIRY}s`,
     });
   }
@@ -74,7 +72,10 @@ export class TokenService {
    */
   static verify_access_token(token: string): TokenPayload {
     try {
-      return jwt.verify(token, ACCESS_SECRET) as TokenPayload;
+      return jwt.verify(
+        token,
+        getRequiredEnvVar("JWT_SECRET"),
+      ) as TokenPayload;
     } catch (error) {
       if (error instanceof jwt.TokenExpiredError) {
         throw new Error("Token de acceso expirado");
@@ -97,7 +98,7 @@ export class TokenService {
     iat: number;
   } {
     try {
-      return jwt.verify(token, REFRESH_SECRET) as {
+      return jwt.verify(token, getRequiredEnvVar("JWT_REFRESH_SECRET")) as {
         user_id: number;
         email: string;
         type: string;

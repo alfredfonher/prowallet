@@ -132,7 +132,7 @@ echo "Con el accessToken, verifica tu usuario:"
 echo ""
 echo "───────────────────────────────────────────────────────────────────────"
 echo 'curl -X GET https://servicioshilda.orioncaribe.com/api/v1/auth/me \'
-echo '  -H "Authorization: Bearer YOUR_ACCESS_TOKEN_HERE"'
+echo '  -H "Authorization: Bearer <ACCESS_TOKEN>"'
 echo "───────────────────────────────────────────────────────────────────────"
 echo ""
 echo "Respuesta esperada:"

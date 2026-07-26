@@ -6,16 +6,20 @@ services:
     image: postgres:16-alpine
     container_name: prowallet-postgres
     environment:
-      POSTGRES_DB: prowallet
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: prowallet_secure_password_123
+      POSTGRES_DB: ${POSTGRES_DB:-prowallet}
+      POSTGRES_USER: ${POSTGRES_USER:-prowallet}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env.docker}
     volumes:
       - postgres_data:/var/lib/postgresql/data
     # ⚠️ SECURITY: Do NOT expose database port to internet
     # ports:
     #   - "5432:5432"
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}",
+        ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -49,6 +53,16 @@ services:
     build:
       context: .
       dockerfile: apps/web/Dockerfile.web
+      args:
+        NEXT_PUBLIC_ENVIRONMENT: ${NEXT_PUBLIC_ENVIRONMENT:-local}
+        NEXT_PUBLIC_API_URL_LOCAL: ${NEXT_PUBLIC_API_URL_LOCAL:-http://localhost:3005/api/v1}
+        NEXT_PUBLIC_API_URL_CLOUD: ${NEXT_PUBLIC_API_URL_CLOUD:-https://servicioshilda.orioncaribe.com/api/v1}
+        NEXT_PUBLIC_SOLANA_NETWORK: ${NEXT_PUBLIC_SOLANA_NETWORK:-devnet}
+        NEXT_PUBLIC_SOLANA_RPC_URL: ${NEXT_PUBLIC_SOLANA_RPC_URL:-https://api.devnet.solana.com}
+        NEXT_PUBLIC_FALLBACK_SOLANA_RPC_URL: ${NEXT_PUBLIC_FALLBACK_SOLANA_RPC_URL:-https://api.devnet.solana.com}
+        NEXT_PUBLIC_HELIUS_API_KEY: ${NEXT_PUBLIC_HELIUS_API_KEY:-}
+        NEXT_PUBLIC_PROWALLET_PROGRAM_ID: ${NEXT_PUBLIC_PROWALLET_PROGRAM_ID:-}
+        NEXT_PUBLIC_TOKEN_MINT: ${NEXT_PUBLIC_TOKEN_MINT:-}
     container_name: prowallet-web
     depends_on:
       - api
@@ -63,14 +77,14 @@ services:
 
       # Solana mainnet config (Helius RPC)
       NEXT_PUBLIC_SOLANA_NETWORK: mainnet-beta
-      NEXT_PUBLIC_SOLANA_RPC_URL: https://mainnet.helius-rpc.com/?api-key=97cdbcf5-714f-4e61-b355-93368a279e34
-      NEXT_PUBLIC_FALLBACK_SOLANA_RPC_URL: https://api.rpcpool.com
+      NEXT_PUBLIC_SOLANA_RPC_URL: ${NEXT_PUBLIC_SOLANA_RPC_URL:-https://api.devnet.solana.com}
+      NEXT_PUBLIC_FALLBACK_SOLANA_RPC_URL: ${NEXT_PUBLIC_FALLBACK_SOLANA_RPC_URL:-https://api.devnet.solana.com}
       NEXT_PUBLIC_PROWALLET_PROGRAM_ID: 7sa2XazRU4R6DcsNLGMWcX4nabCzWwjj3Awfh1gxhtem
 
       # Helius API endpoints (for frontend transaction parsing)
-      NEXT_PUBLIC_HELIUS_API_KEY: 97cdbcf5-714f-4e61-b355-93368a279e34
-      NEXT_PUBLIC_HELIUS_PARSE_TRANSACTION_URL: https://api-mainnet.helius-rpc.com/v0/transactions/?api-key=97cdbcf5-714f-4e61-b355-93368a279e34
-      NEXT_PUBLIC_HELIUS_PARSE_HISTORY_URL: https://api-mainnet.helius-rpc.com/v0/addresses/{address}/transactions/?api-key=97cdbcf5-714f-4e61-b355-93368a279e34
+      NEXT_PUBLIC_HELIUS_API_KEY: ${NEXT_PUBLIC_HELIUS_API_KEY:-}
+      NEXT_PUBLIC_HELIUS_PARSE_TRANSACTION_URL: ${NEXT_PUBLIC_HELIUS_PARSE_TRANSACTION_URL:-}
+      NEXT_PUBLIC_HELIUS_PARSE_HISTORY_URL: ${NEXT_PUBLIC_HELIUS_PARSE_HISTORY_URL:-}
 
       # Token config (public - from local development)
       NEXT_PUBLIC_TOKEN_MINT: D8TwbwGGmyucrxPB9uscait27caVgeqYHPpyN3XXjUX3
@@ -79,7 +93,8 @@ services:
       NEXT_PUBLIC_TEST_MODE_FREE_TOKEN: "false"
 
       # API config - tells frontend where to call the backend API
-      NEXT_PUBLIC_API_URL: https://servicioshilda.orioncaribe.com/api/v1
+      NEXT_PUBLIC_API_URL_LOCAL: ${NEXT_PUBLIC_API_URL_LOCAL:-http://localhost:3005/api/v1}
+      NEXT_PUBLIC_API_URL_CLOUD: ${NEXT_PUBLIC_API_URL_CLOUD:-https://servicioshilda.orioncaribe.com/api/v1}
     ports:
       - "3006:3000"
     networks:
@@ -105,21 +120,21 @@ services:
       PORT: 3001
 
       # Database connection string - REQUIRED
-      DATABASE_URL: postgresql://postgres:prowallet_secure_password_123@postgres:5432/prowallet
+      DATABASE_URL: ${DATABASE_URL:?Set DATABASE_URL in .env.docker}
 
       # ============================================================================
       # SOLANA NETWORK CONFIGURATION
       # ============================================================================
       SOLANA_NETWORK: mainnet-beta
-      SOLANA_RPC_URL: https://mainnet.helius-rpc.com/?api-key=97cdbcf5-714f-4e61-b355-93368a279e34
-      FALLBACK_SOLANA_RPC_URL: https://api.rpcpool.com
+      SOLANA_RPC_URL: ${SOLANA_RPC_URL:-https://api.devnet.solana.com}
+      FALLBACK_SOLANA_RPC_URL: ${FALLBACK_SOLANA_RPC_URL:-https://api.devnet.solana.com}
 
       # ============================================================================
       # HELIUS API ENDPOINTS (for parsing transactions)
       # ============================================================================
-      HELIUS_API_KEY: 97cdbcf5-714f-4e61-b355-93368a279e34
-      HELIUS_PARSE_TRANSACTION_URL: https://api-mainnet.helius-rpc.com/v0/transactions/?api-key=97cdbcf5-714f-4e61-b355-93368a279e34
-      HELIUS_PARSE_HISTORY_URL: https://api-mainnet.helius-rpc.com/v0/addresses/{address}/transactions/?api-key=97cdbcf5-714f-4e61-b355-93368a279e34
+      HELIUS_API_KEY: ${HELIUS_API_KEY:?Set HELIUS_API_KEY in .env.docker}
+      HELIUS_PARSE_TRANSACTION_URL: "https://api-mainnet.helius-rpc.com/v0/transactions/?api-key=${HELIUS_API_KEY:?Set HELIUS_API_KEY in .env.docker}"
+      HELIUS_PARSE_HISTORY_URL: "https://api-mainnet.helius-rpc.com/v0/addresses/{address}/transactions/?api-key=${HELIUS_API_KEY:?Set HELIUS_API_KEY in .env.docker}"
 
       # ============================================================================
       # TOKEN CONFIGURATION
@@ -155,12 +170,10 @@ services:
       TREASURY_WALLET: EizJ7W8AbhUAPdSjdEjyKJDEmk7MSJnR6JfH2h2gitLH
 
       # ============================================================================
-      # KEYPAIR PATHS (IDL files mounted in container)
+      # SIGNING CREDENTIALS (runtime only)
       # ============================================================================
-      PROVIDER_WALLET: /app/apps/api/idl/prowallet.json
-      KEYPAIR_PATH: /app/apps/api/idl/prowallet.json
-      AUTHORITY_KEYPAIR_PATH: /app/apps/api/idl/prowallet.json
-      PROGRAM_KEYPAIR: /app/apps/api/idl/prowallet_contract.json
+      AUTHORITY_KEYPAIR_PATH: /run/secrets/prowallet-authority-keypair.json
+      TREASURY_PRIVATE_KEY: ${TREASURY_PRIVATE_KEY:?Set TREASURY_PRIVATE_KEY in .env.docker}
 
       # ============================================================================
       # PROGRAM CONFIGURATION & IDL ARTIFACTS
@@ -178,14 +191,15 @@ services:
       # ============================================================================
       # JWT AUTHENTICATION
       # ============================================================================
-      JWT_SECRET: 9f3c1a8e6b2d4f709c8a5e1d3b7f2a4c
+      JWT_SECRET: ${JWT_SECRET:?Set JWT_SECRET in .env.docker}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:?Set JWT_REFRESH_SECRET in .env.docker}
 
       # ============================================================================
       # API CONFIGURATION
       # ============================================================================
       API_VERSION: v1
       API_PREFIX: /api
-      ALLOWED_ORIGINS: https://exchange.gapstation.net,http://localhost:3000,http://localhost:3001,http://localhost:5173
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-http://localhost:3006}
 
       # ============================================================================
       # RATE LIMITING
@@ -225,13 +239,14 @@ services:
       LOG_LEVEL: info
 
       # Redis connection
-      REDIS_URL: redis://redis:6379
+      REDIS_URL: ${REDIS_URL:-redis://redis:6379}
     ports:
       - "3005:3001"
     networks:
       - prowallet-network
     volumes:
       - ./logs:/app/logs
+      - "${AUTHORITY_KEYPAIR_HOST_PATH:?Set AUTHORITY_KEYPAIR_HOST_PATH in .env.docker}:/run/secrets/prowallet-authority-keypair.json:ro"
     restart: unless-stopped
 
 volumes:

@@ -23,15 +23,16 @@ cp .env.docker.example .env.docker
 
 ```bash
 # Critical secrets - NEVER commit to git!
-DATABASE_URL=postgresql://user:password@db.yourhost.com:5432/prowallet
+DATABASE_URL=postgresql://user:<PASSWORD>@db.yourhost.com:5432/prowallet
 SOLANA_RPC_URL=https://mainnet.helius-rpc.com/?api-key=YOUR_KEY
-HELIUS_API_KEY=YOUR_HELIUS_API_KEY
+HELIUS_API_KEY=<HELIUS_API_KEY>
 TREASURY_PRIVATE_KEY=YOUR_WALLET_PRIVATE_KEY_BASE58
 JWT_SECRET=$(openssl rand -base64 32)
+JWT_REFRESH_SECRET=$(openssl rand -base64 32)
 
 # Frontend URLs
 NEXT_PUBLIC_API_URL=https://servicioshilda.orioncaribe.com/api/v1
-NEXT_PUBLIC_HELIUS_API_KEY=YOUR_HELIUS_API_KEY
+NEXT_PUBLIC_HELIUS_API_KEY=<HELIUS_API_KEY>
 
 # CORS - Allow your frontend origins
 ALLOWED_ORIGINS=https://exchange.gapstation.net,https://servicioshilda.orioncaribe.com
@@ -54,7 +55,7 @@ If using a managed database (AWS RDS, Digital Ocean, etc.):
 
 ```bash
 # Set DATABASE_URL in .env.docker
-DATABASE_URL=postgresql://user:password@db.example.com:5432/prowallet
+DATABASE_URL=postgresql://user:<PASSWORD>@db.example.com:5432/prowallet
 ```
 
 ### Option B: Docker PostgreSQL (Development Only)

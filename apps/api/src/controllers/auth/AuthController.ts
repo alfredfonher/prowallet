@@ -12,7 +12,6 @@ import { getRequiredEnvVar } from "../../utils/env";
  * NOTA: register/login con email/password están en handlers separados
  */
 
-const JWT_SECRET = getRequiredEnvVar("JWT_SECRET");
 const TOKEN_EXPIRY = "24h";
 
 export class AuthController {
@@ -86,7 +85,7 @@ export class AuthController {
           solanaPublicKey: publicKey,
           iat: Math.floor(Date.now() / 1000),
         },
-        JWT_SECRET,
+        getRequiredEnvVar("JWT_SECRET"),
         { expiresIn: TOKEN_EXPIRY },
       );
 

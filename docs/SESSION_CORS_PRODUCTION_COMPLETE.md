@@ -160,7 +160,7 @@ NEXT_PUBLIC_HELIUS_API_KEY=YOUR_KEY
 NODE_ENV=production
 ALLOWED_ORIGINS=https://exchange.gapstation.net,https://servicioshilda.orioncaribe.com
 SOLANA_RPC_URL=https://mainnet.helius-rpc.com/?api-key=YOUR_KEY
-DATABASE_URL=postgresql://user:pass@host:5432/prowallet
+DATABASE_URL=postgresql://user:<PASSWORD>@host:5432/prowallet
 ```
 
 ---

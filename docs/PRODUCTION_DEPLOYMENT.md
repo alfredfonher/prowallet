@@ -68,7 +68,7 @@ PORT=3001
 LOG_LEVEL=info
 
 # Database
-DATABASE_URL=postgresql://prowalletuser:prowalletpass@postgres-host:5432/prowallet
+DATABASE_URL=postgresql://prowalletuser:<PASSWORD>@postgres-host:5432/prowallet
 
 # Solana
 SOLANA_NETWORK=mainnet-beta
@@ -97,7 +97,7 @@ NEXT_PUBLIC_ENVIRONMENT=production
 NEXT_PUBLIC_API_URL_CLOUD=https://servicioshilda.orioncaribe.com/api/v1
 NEXT_PUBLIC_API_URL=https://servicioshilda.orioncaribe.com/api/v1
 NEXT_PUBLIC_SOLANA_NETWORK=mainnet-beta
-NEXT_PUBLIC_HELIUS_API_KEY=YOUR_HELIUS_KEY
+NEXT_PUBLIC_HELIUS_API_KEY=<HELIUS_API_KEY>
 NEXT_PUBLIC_SOLANA_RPC_URL=https://mainnet.helius-rpc.com/?api-key=YOUR_KEY
 NEXT_PUBLIC_PROWALLET_PROGRAM_ID=7sa2XazRU4R6DcsNLGMWcX4nabCzWwjj3Awfh1gxhtem
 NEXT_PUBLIC_TOKEN_MINT=D8TwbwGGmyucrxPB9uscait27caVgeqYHPpyN3XXjUX3
@@ -121,7 +121,7 @@ services:
     environment:
       POSTGRES_DB: prowallet
       POSTGRES_USER: prowalletuser
-      POSTGRES_PASSWORD: securepassword
+      POSTGRES_PASSWORD: <POSTGRES_PASSWORD>
     volumes:
       - postgres_data:/var/lib/postgresql/data
     ports:
@@ -133,7 +133,7 @@ services:
       dockerfile: apps/api/Dockerfile
     environment:
       NODE_ENV: production
-      DATABASE_URL: postgresql://prowalletuser:securepassword@postgres:5432/prowallet
+      DATABASE_URL: postgresql://prowalletuser:<PASSWORD>@postgres:5432/prowallet
       ALLOWED_ORIGINS: https://exchange.gapstation.net,https://servicioshilda.orioncaribe.com
       SOLANA_RPC_URL: https://mainnet.helius-rpc.com/?api-key=YOUR_KEY
       PROWALLET_PROGRAM_ID: 7sa2XazRU4R6DcsNLGMWcX4nabCzWwjj3Awfh1gxhtem

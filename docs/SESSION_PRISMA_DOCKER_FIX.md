@@ -201,7 +201,7 @@ All these must be in `.env.docker`:
 
 | Variable               | Type     | Example                                                |
 | ---------------------- | -------- | ------------------------------------------------------ |
-| `DATABASE_URL`         | REQUIRED | `postgresql://postgres:postgres@postgres:5432/prowallet` |
+| `DATABASE_URL`         | REQUIRED | `postgresql://postgres:<PASSWORD>@postgres:5432/prowallet` |
 | `SOLANA_NETWORK`       | REQUIRED | `mainnet-beta`                                         |
 | `SOLANA_RPC_URL`       | REQUIRED | `https://mainnet.helius-rpc.com/?api-key=XXX`          |
 | `HELIUS_API_KEY`       | REQUIRED | Your API key                                           |
