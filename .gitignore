@@ -30,6 +30,9 @@ coverage/
 *.db
 *.db-journal
 
+# Assets (dev resources, not code)
+assets/
+
 # OS / Editor
 .DS_Store
 Thumbs.db
