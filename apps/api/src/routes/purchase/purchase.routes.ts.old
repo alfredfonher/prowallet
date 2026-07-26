@@ -1,0 +1,1251 @@
+import { Router, Request, Response } from "express";
+import { validationResult } from "express-validator";
+import { StatusFlow, StatusFlowCodes } from "status-flow";
+import {
+    purchaseController,
+    purchaseValidators,
+} from "../../controllers/purchase/PurchaseController";
+import {
+    manualTransactionController,
+    manualTransactionValidators,
+} from "../../controllers/purchase/ManualTransactionController";
+import { requestLoggerMiddleware } from "../../services/logging/logger.service";
+import {
+    PURCHASE_RATE_LIMITER,
+    PRICE_RATE_LIMITER,
+} from "../../middleware/rateLimiter";
+
+const router: Router = Router();
+
+// Validación de errores - extraída en función separada
+const validateRequest = (req: any, res: any, next: any): void => {
+    const errors = validationResult(req);
+    if (errors.isEmpty()) {
+        next();
+        return;
+    }
+
+    const errorDetails = errors.array().map(({ path, msg, value }) => ({
+        field: path,
+        message: msg,
+        ...(value !== undefined && { value }),
+    }));
+
+    res.status(400).json(
+        StatusFlow({
+            code: StatusFlowCodes.BAD_REQUEST,
+            lang: "es",
+            extra: {
+                error: "Validation failed",
+                details: errorDetails,
+                timestamp: new Date().toISOString(),
+                requestId: req.requestId,
+            },
+        })
+    );
+};
+
+// Aplicar logger middleware a todas las rutas
+router.use(requestLoggerMiddleware);
+
+/**
+ * @swagger
+ * /api/v1/purchase/price:
+ *   get:
+ *     summary: Obtener precio actual del token
+ *     description: Calcula el precio actual del token PROWALLET basado en la bonding curve y supply actual
+ *     tags: [Purchase]
+ *     parameters:
+ *       - in: query
+ *         name: amount
+ *         schema:
+ *           type: number
+ *           minimum: 0.1
+ *           example: 100
+ *         description: Cantidad de tokens para calcular precio (opcional, por defecto 1)
+ *     responses:
+ *       200:
+ *         description: Precio calculado exitosamente
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     tokenAmount:
+ *                       type: number
+ *                       example: 100
+ *                     pricePerToken:
+ *                       type: number
+ *                       example: 0.0012
+ *                     totalCost:
+ *                       type: number
+ *                       example: 0.12
+ *                     gasCost:
+ *                       type: number
+ *                       example: 0.0015
+ *                     priceImpact:
+ *                       type: number
+ *                       example: 2.5
+ *                     nextPrice:
+ *                       type: number
+ *                       example: 0.00125
+ *                     slippage:
+ *                       type: number
+ *                       example: 2.5
+ *                     bondingCurve:
+ *                       type: object
+ *                     currentSupply:
+ *                       type: number
+ *                       example: 50000
+ *                     availableSupply:
+ *                       type: number
+ *                       example: 950000
+ *                 timestamp:
+ *                   type: string
+ *                   format: date-time
+ *                 requestId:
+ *                   type: string
+ *       400:
+ *         description: Parámetros inválidos
+ *       429:
+ *         description: Demasiadas solicitudes
+ *       500:
+ *         description: Error interno del servidor
+ */
+router.get(
+    "/price",
+    PRICE_RATE_LIMITER,
+    purchaseValidators.getCurrentPrice,
+    validateRequest,
+    purchaseController.getCurrentPrice.bind(purchaseController)
+);
+
+// Tipos para CoinGecko
+interface CoinGeckoMarket {
+    id: string;
+    symbol: string;
+    name: string;
+    market_cap: number | null;
+    current_price: number | null;
+    price_change_percentage_24h: number | null;
+    image: string | null;
+}
+
+interface SanitizedCrypto {
+    readonly id: string;
+    readonly symbol: string;
+    readonly name: string;
+    readonly market_cap: number;
+    readonly current_price: number;
+    readonly price_change_percentage_24h: number;
+    readonly image: string | null;
+}
+
+// Constantes de CoinGecko
+const COINGECKO_API = {
+    BASE_URL: "https://api.coingecko.com/api/v3",
+    TOP_10_ENDPOINT: "/coins/markets",
+    PRICE_HISTORY_ENDPOINT: "/coins/{id}/market_chart",
+} as const;
+
+const TOP_10_PARAMS = new URLSearchParams({
+    vs_currency: "usd",
+    order: "market_cap_desc",
+    per_page: "10",
+    page: "1",
+    sparkline: "false",
+});
+
+const PRICE_HISTORY_PARAMS = new URLSearchParams({
+    vs_currency: "usd",
+    days: "7",
+    interval: "hourly",
+});
+
+// Función para sanitizar datos de CoinGecko
+const sanitizeCryptoMarket = (market: CoinGeckoMarket): SanitizedCrypto => ({
+    id: market.id,
+    symbol: market.symbol,
+    name: market.name,
+    market_cap: market.market_cap ?? 0,
+    current_price: market.current_price ?? 0,
+    price_change_percentage_24h: market.price_change_percentage_24h ?? 0,
+    image: market.image,
+});
+
+// Top-10 cryptos by market cap (uses CoinGecko public API)
+router.get("/top-10", async (req: Request, res: Response) => {
+    try {
+        const url = `${COINGECKO_API.BASE_URL}${COINGECKO_API.TOP_10_ENDPOINT}?${TOP_10_PARAMS}`;
+        const response = await fetch(url);
+
+        if (!response.ok) {
+            throw new Error(
+                `CoinGecko API error: ${response.status} ${response.statusText}`
+            );
+        }
+
+        const data: unknown = await response.json();
+
+        if (!Array.isArray(data)) {
+            throw new Error("Invalid response format from CoinGecko");
+        }
+
+        const sanitizedList: SanitizedCrypto[] = data.map(sanitizeCryptoMarket);
+
+        res.json(
+            StatusFlow({
+                code: StatusFlowCodes.OK,
+                lang: "es",
+                extra: { list: sanitizedList },
+            })
+        );
+    } catch (error) {
+        const errorMessage =
+            error instanceof Error ? error.message : "Unknown error";
+        res.status(500).json(
+            StatusFlow({
+                code: StatusFlowCodes.INTERNAL_SERVER_ERROR,
+                lang: "es",
+                extra: { error: errorMessage },
+            })
+        );
+    }
+});
+
+interface PricePoint {
+    readonly timestamp: number;
+    readonly price: number;
+}
+
+// Price history for a specific crypto (coin id) — 7 day hourly candles
+router.get("/price-history/:id", async (req: Request, res: Response) => {
+    const { id } = req.params;
+
+    // Validación de parámetro
+    if (!id || typeof id !== "string" || id.trim().length === 0) {
+        return res.status(400).json(
+            StatusFlow({
+                code: StatusFlowCodes.BAD_REQUEST,
+                lang: "es",
+                extra: { error: "Valid crypto ID is required" },
+            })
+        );
+    }
+
+    try {
+        const encodedId = encodeURIComponent(id);
+        const url = `${COINGECKO_API.BASE_URL}${COINGECKO_API.PRICE_HISTORY_ENDPOINT.replace("{id}", encodedId)}?${PRICE_HISTORY_PARAMS}`;
+
+        const response = await fetch(url);
+
+        if (!response.ok) {
+            throw new Error(
+                `CoinGecko API error: ${response.status} ${response.statusText}`
+            );
+        }
+
+        const data: any = await response.json();
+
+        if (!Array.isArray(data?.prices)) {
+            throw new Error("Invalid price data from CoinGecko");
+        }
+
+        const series: PricePoint[] = data.prices
+            .filter(
+                (price: unknown[]): price is [number, number] =>
+                    Array.isArray(price) &&
+                    typeof price[0] === "number" &&
+                    typeof price[1] === "number"
+            )
+            .map(([timestamp, price]) => ({
+                timestamp,
+                price,
+            }));
+
+        res.json(
+            StatusFlow({
+                code: StatusFlowCodes.OK,
+                lang: "es",
+                extra: { id, series },
+            })
+        );
+    } catch (error) {
+        const errorMessage =
+            error instanceof Error ? error.message : "Unknown error";
+        res.status(500).json(
+            StatusFlow({
+                code: StatusFlowCodes.INTERNAL_SERVER_ERROR,
+                lang: "es",
+                extra: { error: errorMessage },
+            })
+        );
+    }
+});
+        res.json(
+            StatusFlow({
+                code: StatusFlowCodes.OK,
+                lang: "es",
+                extra: { id, series },
+            })
+        );
+    } catch (e) {
+        res.status(500).json(
+            StatusFlow({
+                code: StatusFlowCodes.INTERNAL_SERVER_ERROR,
+                lang: "es",
+                extra: { error: (e as Error).message },
+            })
+        );
+    }
+});
+
+/**
+ * @swagger
+ * /api/v1/purchase/initiate:
+ *   post:
+ *     summary: Iniciar proceso de compra
+ *     description: Inicia una nueva compra de tokens PROWALLET y retorna un transactionId para confirmar
+ *     tags: [Purchase]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - walletAddress
+ *               - tokenAmount
+ *             properties:
+ *               walletAddress:
+ *                 type: string
+ *                 example: "GmYsHTNVhnJwpV5yiHa8NwLqnMpan3Qy8LsqA7L9yzH1"
+ *                 description: Dirección de wallet de Solana del comprador
+ *               tokenAmount:
+ *                 type: number
+ *                 minimum: 10
+ *                 maximum: 10000
+ *                 example: 100
+ *                 description: Cantidad de tokens PROWALLET a comprar
+ *               paymentMethod:
+ *                 type: string
+ *                 enum: [SOL, USDC]
+ *                 default: SOL
+ *                 description: Método de pago (SOL o USDC)
+ *               maxSlippage:
+ *                 type: number
+ *                 minimum: 0.1
+ *                 maximum: 50
+ *                 default: 5
+ *                 description: Slippage máximo aceptable en porcentaje
+ *     responses:
+ *       200:
+ *         description: Compra iniciada exitosamente
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     transactionId:
+ *                       type: string
+ *                       format: uuid
+ *                       example: "550e8400-e29b-41d4-a716-446655440000"
+ *                     walletAddress:
+ *                       type: string
+ *                       example: "GmYsHTNVhnJwpV5yiHa8NwLqnMpan3Qy8LsqA7L9yzH1"
+ *                     tokenAmount:
+ *                       type: number
+ *                       example: 100
+ *                     pricePerToken:
+ *                       type: number
+ *                       example: 0.0012
+ *                     totalCost:
+ *                       type: number
+ *                       example: 0.12
+ *                     gasCost:
+ *                       type: number
+ *                       example: 0.0015
+ *                     paymentMethod:
+ *                       type: string
+ *                       example: "SOL"
+ *                     status:
+ *                       type: string
+ *                       example: "pending"
+ *                     expiresIn:
+ *                       type: number
+ *                       example: 300
+ *                     instructions:
+ *                       type: string
+ *                       example: "Use the transactionId to confirm the purchase within 5 minutes"
+ *       400:
+ *         description: Datos de entrada inválidos o slippage excedido
+ *       429:
+ *         description: Demasiadas solicitudes de compra
+ *       500:
+ *         description: Error interno del servidor
+ */
+router.post(
+    "/initiate",
+    purchaseRateLimit,
+    purchaseValidators.initiatePurchase,
+    handleValidationErrors,
+    purchaseController.initiatePurchase.bind(purchaseController)
+);
+
+/**
+ * @swagger
+ * /api/v1/purchase/confirm/{transactionId}:
+ *   post:
+ *     summary: Confirmar compra con signature de Solana
+ *     description: Confirma una compra pendiente usando la signature de la transacción de Solana
+ *     tags: [Purchase]
+ *     parameters:
+ *       - in: path
+ *         name: transactionId
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: ID de la transacción a confirmar
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - signature
+ *             properties:
+ *               signature:
+ *                 type: string
+ *                 example: "3Bq8zR7hUJ5dY9xMz2p4qE6Fv8CgNLo9Xk1mW7jP5RtU4Sw6rN8bA2eD9hG3"
+ *                 description: Signature de la transacción de Solana
+ *               blockSlot:
+ *                 type: integer
+ *                 minimum: 1
+ *                 example: 123456789
+ *                 description: Slot de bloque donde se confirmó la transacción (opcional)
+ *     responses:
+ *       200:
+ *         description: Compra confirmada exitosamente
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     transactionId:
+ *                       type: string
+ *                       format: uuid
+ *                     signature:
+ *                       type: string
+ *                     blockSlot:
+ *                       type: integer
+ *                     walletAddress:
+ *                       type: string
+ *                     tokenAmount:
+ *                       type: number
+ *                     totalCost:
+ *                       type: number
+ *                     status:
+ *                       type: string
+ *                       example: "success"
+ *                     completedAt:
+ *                       type: string
+ *                       format: date-time
+ *       400:
+ *         description: Signature inválida o datos incorrectos
+ *       404:
+ *         description: Transacción no encontrada
+ *       410:
+ *         description: Transacción expirada
+ *       500:
+ *         description: Error interno del servidor
+ */
+router.post(
+    "/confirm/:transactionId",
+    purchaseValidators.confirmPurchase,
+    handleValidationErrors,
+    purchaseController.confirmPurchase.bind(purchaseController)
+);
+
+/**
+ * @swagger
+ * /api/v1/purchase/history/{walletAddress}:
+ *   get:
+ *     summary: Obtener historial de compras de una wallet
+ *     description: Retorna el historial completo de compras de una wallet específica con paginación
+ *     tags: [Purchase]
+ *     parameters:
+ *       - in: path
+ *         name: walletAddress
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Dirección de la wallet
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *           default: 1
+ *         description: Página a mostrar
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *           maximum: 50
+ *           default: 10
+ *         description: Número de transacciones por página
+ *       - in: query
+ *         name: status
+ *         schema:
+ *           type: string
+ *           enum: [pending, success, failed, cancelled]
+ *         description: Filtrar por estado de transacción
+ *     responses:
+ *       200:
+ *         description: Historial obtenido exitosamente
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     transactions:
+ *                       type: array
+ *                       items:
+ *                         type: object
+ *                         properties:
+ *                           transactionId:
+ *                             type: string
+ *                           tokenAmount:
+ *                             type: number
+ *                           paymentAmount:
+ *                             type: number
+ *                           tokenPrice:
+ *                             type: number
+ *                           status:
+ *                             type: string
+ *                           createdAt:
+ *                             type: string
+ *                             format: date-time
+ *                           completedAt:
+ *                             type: string
+ *                             format: date-time
+ *                           signature:
+ *                             type: string
+ *                     pagination:
+ *                       type: object
+ *                       properties:
+ *                         currentPage:
+ *                           type: integer
+ *                         totalPages:
+ *                           type: integer
+ *                         totalCount:
+ *                           type: integer
+ *                         hasNext:
+ *                           type: boolean
+ *                         hasPrev:
+ *                           type: boolean
+ *       400:
+ *         description: Parámetros inválidos
+ *       500:
+ *         description: Error interno del servidor
+ */
+router.get(
+    "/history/:walletAddress",
+    purchaseValidators.getPurchaseHistory,
+    handleValidationErrors,
+    purchaseController.getPurchaseHistory.bind(purchaseController)
+);
+
+/**
+ * @swagger
+ * /api/v1/purchase/market-stats:
+ *   get:
+ *     summary: Obtener estadísticas del mercado
+ *     description: Retorna estadísticas completas del mercado para mostrar transparencia a los usuarios
+ *     tags: [Purchase]
+ *     parameters:
+ *       - in: query
+ *         name: timeframe
+ *         schema:
+ *           type: string
+ *           enum: [1h, 24h, 7d, 30d]
+ *           default: 24h
+ *         description: Marco temporal para las estadísticas
+ *     responses:
+ *       200:
+ *         description: Estadísticas obtenidas exitosamente
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     currentPrice:
+ *                       type: number
+ *                       example: 0.0012
+ *                     currentSupply:
+ *                       type: number
+ *                       example: 50000
+ *                     maxSupply:
+ *                       type: number
+ *                       example: 1000000
+ *                     supplyPercentage:
+ *                       type: string
+ *                       example: "5.00"
+ *                     volume:
+ *                       type: object
+ *                       properties:
+ *                         totalVolume:
+ *                           type: number
+ *                         totalTransactions:
+ *                           type: number
+ *                         avgTransactionSize:
+ *                           type: number
+ *                     holders:
+ *                       type: object
+ *                       properties:
+ *                         totalHolders:
+ *                           type: number
+ *                         topHolders:
+ *                           type: array
+ *                           items:
+ *                             type: object
+ *                             properties:
+ *                               walletPreview:
+ *                                 type: string
+ *                                 example: "GmYsHTNV...L9yzH1"
+ *                               tokenBalance:
+ *                                 type: number
+ *                               totalSpent:
+ *                                 type: number
+ *                               transactionCount:
+ *                                 type: number
+ *                               holdingPercentage:
+ *                                 type: string
+ *                     priceHistory:
+ *                       type: array
+ *                       items:
+ *                         type: object
+ *                         properties:
+ *                           _id:
+ *                             type: string
+ *                           avgPrice:
+ *                             type: number
+ *                           volume:
+ *                             type: number
+ *                           transactions:
+ *                             type: number
+ *                     recentActivity:
+ *                       type: array
+ *                       items:
+ *                         type: object
+ *                         properties:
+ *                           tokenAmount:
+ *                             type: number
+ *                           cost:
+ *                             type: number
+ *                           price:
+ *                             type: number
+ *                           timestamp:
+ *                             type: string
+ *                             format: date-time
+ *                           walletPreview:
+ *                             type: string
+ *       400:
+ *         description: Parámetros inválidos
+ *       500:
+ *         description: Error interno del servidor
+ */
+router.get(
+    "/market-stats",
+    purchaseValidators.getMarketStats,
+    handleValidationErrors,
+    purchaseController.getMarketStats.bind(purchaseController)
+);
+
+/**
+ * @swagger
+ * /api/v1/purchase/payment-methods:
+ *   get:
+ *     summary: Obtener métodos de pago disponibles
+ *     description: Retorna todos los métodos de pago disponibles incluyendo criptomonedas y tarjetas
+ *     tags: [Purchase]
+ *     parameters:
+ *       - in: query
+ *         name: currency
+ *         schema:
+ *           type: string
+ *           example: "BTC"
+ *         description: Moneda específica para obtener recomendaciones
+ *     responses:
+ *       200:
+ *         description: Métodos de pago obtenidos exitosamente
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     fiat:
+ *                       type: object
+ *                       properties:
+ *                         creditCard:
+ *                           type: object
+ *                           properties:
+ *                             available:
+ *                               type: boolean
+ *                             processors:
+ *                               type: array
+ *                             currencies:
+ *                               type: array
+ *                               items:
+ *                                 type: string
+ *                         debitCard:
+ *                           type: object
+ *                           properties:
+ *                             available:
+ *                               type: boolean
+ *                             processors:
+ *                               type: array
+ *                             currencies:
+ *                               type: array
+ *                               items:
+ *                                 type: string
+ *                     crypto:
+ *                       type: object
+ *                       properties:
+ *                         available:
+ *                           type: boolean
+ *                         processors:
+ *                           type: array
+ *                         currencies:
+ *                           type: array
+ *                           items:
+ *                             type: object
+ *                             properties:
+ *                               symbol:
+ *                                 type: string
+ *                               name:
+ *                                 type: string
+ *                               decimals:
+ *                                 type: number
+ *                               minAmount:
+ *                                 type: number
+ *                               maxAmount:
+ *                                 type: number
+ *                         allCurrencies:
+ *                           type: number
+ *                     native:
+ *                       type: object
+ *                       properties:
+ *                         solana:
+ *                           type: object
+ *                           properties:
+ *                             available:
+ *                               type: boolean
+ *                             currencies:
+ *                               type: array
+ *                               items:
+ *                                 type: string
+ *                             description:
+ *                               type: string
+ *                     exchangeRates:
+ *                       type: object
+ *                     lastUpdated:
+ *                       type: string
+ *                       format: date-time
+ *       500:
+ *         description: Error interno del servidor
+ */
+router.get(
+    "/payment-methods",
+    purchaseValidators.getPaymentMethods,
+    handleValidationErrors,
+    purchaseController.getPaymentMethods.bind(purchaseController)
+);
+
+/**
+ * @swagger
+ * /api/v1/purchase/create-payment:
+ *   post:
+ *     summary: Crear pago alternativo
+ *     description: Crea un pago usando métodos alternativos como criptomonedas o tarjetas
+ *     tags: [Purchase]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - walletAddress
+ *               - tokenAmount
+ *               - paymentCurrency
+ *               - paymentMethod
+ *             properties:
+ *               walletAddress:
+ *                 type: string
+ *                 example: "GmYsHTNVhnJwpV5yiHa8NwLqnMpan3Qy8LsqA7L9yzH1"
+ *                 description: Dirección de wallet de Solana del comprador
+ *               tokenAmount:
+ *                 type: number
+ *                 minimum: 10
+ *                 maximum: 10000
+ *                 example: 100
+ *                 description: Cantidad de tokens TKRC a comprar
+ *               paymentCurrency:
+ *                 type: string
+ *                 example: "BTC"
+ *                 description: Moneda de pago (BTC, ETH, USD, EUR, etc.)
+ *               paymentMethod:
+ *                 type: string
+ *                 enum: [crypto, card]
+ *                 example: "crypto"
+ *                 description: Tipo de método de pago
+ *               customerEmail:
+ *                 type: string
+ *                 format: email
+ *                 example: "customer@example.com"
+ *                 description: Email del cliente (opcional, requerido para tarjetas)
+ *               processorName:
+ *                 type: string
+ *                 enum: [stripe, coingate, nowpayments]
+ *                 example: "coingate"
+ *                 description: Procesador específico a usar (opcional)
+ *     responses:
+ *       200:
+ *         description: Pago creado exitosamente
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     transactionId:
+ *                       type: string
+ *                       format: uuid
+ *                     processor:
+ *                       type: string
+ *                       example: "coingate"
+ *                     paymentId:
+ *                       type: string
+ *                       example: "cg_123456789"
+ *                     paymentUrl:
+ *                       type: string
+ *                       example: "https://coingate.com/pay/cg_123456789"
+ *                     qrCode:
+ *                       type: string
+ *                       example: "https://chart.googleapis.com/chart?chs=200x200&cht=qr..."
+ *                     walletAddress:
+ *                       type: string
+ *                       example: "1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa"
+ *                     tokenAmount:
+ *                       type: number
+ *                       example: 100
+ *                     paymentAmount:
+ *                       type: number
+ *                       example: 0.001
+ *                     paymentCurrency:
+ *                       type: string
+ *                       example: "BTC"
+ *                     usdAmount:
+ *                       type: number
+ *                       example: 43
+ *                     expiresAt:
+ *                       type: string
+ *                       format: date-time
+ *                     status:
+ *                       type: string
+ *                       example: "pending"
+ *                     instructions:
+ *                       type: string
+ *                       example: "Send the exact amount to the provided wallet address or scan the QR code"
+ *       400:
+ *         description: Datos de entrada inválidos o moneda no soportada
+ *       429:
+ *         description: Demasiadas solicitudes de compra
+ *       500:
+ *         description: Error interno del servidor
+ */
+router.post(
+    "/create-payment",
+    purchaseRateLimit,
+    purchaseValidators.createAlternativePayment,
+    handleValidationErrors,
+    purchaseController.createAlternativePayment.bind(purchaseController)
+);
+
+/**
+ * @swagger
+ * /api/v1/purchase/status/{transactionId}:
+ *   get:
+ *     summary: Verificar estado de pago alternativo
+ *     description: Verifica el estado actual de un pago alternativo (crypto o tarjeta)
+ *     tags: [Purchase]
+ *     parameters:
+ *       - in: path
+ *         name: transactionId
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: ID de la transacción a verificar
+ *     responses:
+ *       200:
+ *         description: Estado del pago obtenido exitosamente
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     transactionId:
+ *                       type: string
+ *                       format: uuid
+ *                     status:
+ *                       type: string
+ *                       example: "success"
+ *                     paymentStatus:
+ *                       type: string
+ *                       example: "confirmed"
+ *                     tokenAmount:
+ *                       type: number
+ *                       example: 100
+ *                     paymentAmount:
+ *                       type: number
+ *                       example: 0.001
+ *                     paymentCurrency:
+ *                       type: string
+ *                       example: "BTC"
+ *                     processor:
+ *                       type: string
+ *                       example: "coingate"
+ *                     processorPaymentId:
+ *                       type: string
+ *                       example: "cg_123456789"
+ *                     completedAt:
+ *                       type: string
+ *                       format: date-time
+ *                     verification:
+ *                       type: object
+ *                       properties:
+ *                         transactionHash:
+ *                           type: string
+ *                         paidAt:
+ *                           type: string
+ *                           format: date-time
+ *                         amount:
+ *                           type: number
+ *                         currency:
+ *                           type: string
+ *       400:
+ *         description: ID de transacción inválido
+ *       404:
+ *         description: Transacción no encontrada
+ *       500:
+ *         description: Error interno del servidor
+ */
+router.get(
+    "/status/:transactionId",
+    purchaseValidators.checkPaymentStatus,
+    handleValidationErrors,
+    purchaseController.checkPaymentStatus.bind(purchaseController)
+);
+
+/**
+ * @swagger
+ * /api/v1/purchase/confirm-manual/{transactionId}:
+ *   post:
+ *     summary: Confirmar transacción manualmente
+ *     description: Confirma una compra pendiente de forma manual sin verificar signature de blockchain (para desarrollo/testing)
+ *     tags: [Purchase]
+ *     parameters:
+ *       - in: path
+ *         name: transactionId
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: ID de la transacción a confirmar
+ *     requestBody:
+ *       required: false
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               action:
+ *                 type: string
+ *                 enum: [confirm]
+ *                 example: "confirm"
+ *                 description: Acción a realizar
+ *               reason:
+ *                 type: string
+ *                 example: "Manual confirmation for testing"
+ *                 description: Motivo de la confirmación manual
+ *     responses:
+ *       200:
+ *         description: Transacción confirmada exitosamente
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     transactionId:
+ *                       type: string
+ *                       format: uuid
+ *                     walletAddress:
+ *                       type: string
+ *                     tokenAmount:
+ *                       type: number
+ *                     totalCost:
+ *                       type: number
+ *                     tokenPrice:
+ *                       type: number
+ *                     status:
+ *                       type: string
+ *                       example: "success"
+ *                     completedAt:
+ *                       type: string
+ *                       format: date-time
+ *                     signature:
+ *                       type: string
+ *                       example: "manual-confirmation-1234567890"
+ *                     confirmationType:
+ *                       type: string
+ *                       example: "manual"
+ *                 message:
+ *                   type: string
+ *                   example: "Transaction confirmed successfully! Tokens have been credited to your wallet."
+ *       404:
+ *         description: Transacción no encontrada o no está pendiente
+ *       410:
+ *         description: Transacción expirada
+ *       500:
+ *         description: Error interno del servidor
+ */
+router.post(
+    "/confirm-manual/:transactionId",
+    manualTransactionValidators.confirmManualTransaction,
+    handleValidationErrors,
+    manualTransactionController.confirmManualTransaction.bind(
+        manualTransactionController
+    )
+);
+
+/**
+ * @swagger
+ * /api/v1/purchase/cancel/{transactionId}:
+ *   post:
+ *     summary: Cancelar transacción
+ *     description: Cancela una compra pendiente
+ *     tags: [Purchase]
+ *     parameters:
+ *       - in: path
+ *         name: transactionId
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: ID de la transacción a cancelar
+ *     requestBody:
+ *       required: false
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               action:
+ *                 type: string
+ *                 enum: [cancel]
+ *                 example: "cancel"
+ *                 description: Acción a realizar
+ *               reason:
+ *                 type: string
+ *                 example: "User requested cancellation"
+ *                 description: Motivo de la cancelación
+ *     responses:
+ *       200:
+ *         description: Transacción cancelada exitosamente
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     transactionId:
+ *                       type: string
+ *                       format: uuid
+ *                     walletAddress:
+ *                       type: string
+ *                     tokenAmount:
+ *                       type: number
+ *                     totalCost:
+ *                       type: number
+ *                     status:
+ *                       type: string
+ *                       example: "cancelled"
+ *                     completedAt:
+ *                       type: string
+ *                       format: date-time
+ *                     reason:
+ *                       type: string
+ *                       example: "Manual cancellation from frontend"
+ *                 message:
+ *                   type: string
+ *                   example: "Transaction cancelled successfully."
+ *       404:
+ *         description: Transacción no encontrada o no está pendiente
+ *       500:
+ *         description: Error interno del servidor
+ */
+router.post(
+    "/cancel/:transactionId",
+    manualTransactionValidators.cancelTransaction,
+    handleValidationErrors,
+    manualTransactionController.cancelTransaction.bind(
+        manualTransactionController
+    )
+);
+
+/**
+ * @swagger
+ * /api/v1/purchase/settle/{transactionId}:
+ *   post:
+ *     summary: Confirmar compra (alias de confirm) con signature de Solana
+ *     description: Alias de `/confirm/{transactionId}` para confirmar una compra pendiente usando la signature de la transacción de Solana.
+ *     tags: [Purchase]
+ *     parameters:
+ *       - in: path
+ *         name: transactionId
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: ID de la transacción a confirmar
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - signature
+ *             properties:
+ *               signature:
+ *                 type: string
+ *                 example: "3Bq8zR7hUJ5dY9xMz2p4qE6Fv8CgNLo9Xk1mW7jP5RtU4Sw6rN8bA2eD9hG3"
+ *                 description: Signature de la transacción de Solana
+ *               blockSlot:
+ *                 type: integer
+ *                 minimum: 1
+ *                 example: 123456789
+ *                 description: Slot de bloque donde se confirmó la transacción (opcional)
+ *     responses:
+ *       200:
+ *         description: Compra confirmada exitosamente
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     transactionId:
+ *                       type: string
+ *                       format: uuid
+ *                     signature:
+ *                       type: string
+ *                     blockSlot:
+ *                       type: integer
+ *                     walletAddress:
+ *                       type: string
+ *                     tokenAmount:
+ *                       type: number
+ *                     totalCost:
+ *                       type: number
+ *                     status:
+ *                       type: string
+ *                       example: "success"
+ *                     completedAt:
+ *                       type: string
+ *                       format: date-time
+ *       400:
+ *         description: Signature inválida o datos incorrectos
+ *       404:
+ *         description: Transacción no encontrada
+ *       410:
+ *         description: Transacción expirada
+ *       500:
+ *         description: Error interno del servidor
+ */
+router.post(
+    "/settle/:transactionId",
+    purchaseValidators.settlePurchase,
+    handleValidationErrors,
+    purchaseController.settlePurchase.bind(purchaseController)
+);
+
+export default router;

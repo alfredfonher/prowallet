@@ -1,0 +1,47 @@
+### ============================================================================
+### HEALTH CHECK ENDPOINTS
+### ============================================================================
+### Verifica el estado general de la API
+
+@api = https://servicioshilda.orioncaribe.com/api/v1
+
+### ============================================================================
+### 1. GET /health - Health Check Básico
+### ============================================================================
+### Verifica que la API está funcionando
+### Respuesta esperada: 200 OK con estado de salud
+
+GET {{@api}}/health
+
+
+### ============================================================================
+### 2. GET /health/db - Database Connection Check
+### ============================================================================
+### Verifica la conexión a la base de datos PostgreSQL
+
+GET {{@api}}/health/db
+
+
+### ============================================================================
+### 3. GET /health/redis - Redis Connection Check
+### ============================================================================
+### Verifica la conexión a Redis
+
+GET {{@api}}/health/redis
+
+
+### ============================================================================
+### 4. GET /health/solana - Solana Connection Check
+### ============================================================================
+### Verifica la conexión a Solana mainnet RPC
+
+GET {{@api}}/health/solana
+
+
+### ============================================================================
+### 5. GET /health/full - Full System Health Check
+### ============================================================================
+### Verifica todas las conexiones y dependencias
+
+GET {{@api}}/health/full
+

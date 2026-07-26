@@ -1,0 +1,188 @@
+### ============================================================================
+### QUICK START GUIDE - REST CLIENT TESTING
+### ============================================================================
+### Guía rápida para empezar a testear
+
+@api = https://servicioshilda.orioncaribe.com/api/v1
+
+### ============================================================================
+### PASO 1: VERIFICAR QUE LA API ESTÁ FUNCIONANDO
+### ============================================================================
+
+GET {{@api}}/health
+
+### Esperado: 200 OK con status "healthy"
+### Si no funciona: Verifica que @api es correcto y la API está corriendo
+
+###
+
+### ============================================================================
+### PASO 2: OBTENER LISTA DE TODOS LOS ENDPOINTS
+### ============================================================================
+
+GET {{@api}}/admin/metadata/endpoints
+
+### Esperado: 200 OK con lista completa de rutas disponibles
+
+###
+
+### ============================================================================
+### PASO 3: OBTENER PRECIO DEL SOL
+### ============================================================================
+
+GET {{@api}}/exchange/solPriceCached
+
+### Esperado: 200 OK con precio actual
+### No requiere autenticación
+
+###
+
+### ============================================================================
+### PASO 4: OBTENER INFORMACIÓN DEL CONTRATO
+### ============================================================================
+
+GET {{@api}}/prowallet/contract-info
+
+### Esperado: 200 OK con información del token GAPC
+### - Token Mint: D8TwbwGGmyucrxPB9uscait27caVgeqYHPpyN3XXjUX3
+### - Token Symbol: GAPC
+### - Token Name: ProWallet
+
+###
+
+### ============================================================================
+### PASO 5: OBTENER ESTADÍSTICAS DEL MERCADO
+### ============================================================================
+
+GET {{@api}}/purchase/market-stats
+
+### Esperado: 200 OK con:
+### - totalTokensMinted
+### - totalSolRaised
+### - currentPrice
+### - holders
+### - bonding_curve_stage
+
+###
+
+### ============================================================================
+### PASO 6: OBTENER WHITELIST
+### ============================================================================
+
+GET {{@api}}/prowallet/whitelist
+
+### Esperado: 200 OK con lista de wallets permitidas
+
+###
+
+### ============================================================================
+### PASO 7: VERIFICAR SI UN WALLET ESTÁ EN WHITELIST
+### ============================================================================
+
+GET {{@api}}/prowallet/whitelist/EizJ7W8AbhUAPdSjdEjyKJDEmk7MSJnR6JfH2h2gitLH
+
+### Esperado: 200 OK con status de whitelist para el wallet
+
+###
+
+### ============================================================================
+### PASO 8: OBTENER TOP TENEDORES DEL TOKEN
+### ============================================================================
+
+GET {{@api}}/prowallet/holders?limit=10
+
+### Esperado: 200 OK con lista de los 10 principales tenedores
+
+###
+
+### ============================================================================
+### PASO 9: OBTENER PRECIO ACTUAL DEL TOKEN
+### ============================================================================
+
+GET {{@api}}/purchase/price
+
+### Esperado: 200 OK con:
+### - price: Precio actual en USD
+### - currency: "usd"
+### - source: Fuente de precio (ej: coingecko)
+
+###
+
+### ============================================================================
+### PASO 10: OBTENER MÉTODOS DE PAGO DISPONIBLES
+### ============================================================================
+
+GET {{@api}}/purchase/payment-methods
+
+### Esperado: 200 OK con lista de métodos de pago
+### Actualmente: Solana (SOL)
+
+###
+
+### ============================================================================
+### PRÓXIMOS PASOS - DESPUÉS DE LOGIN
+### ============================================================================
+
+### Para ejecutar estos endpoints necesitas un token JWT válido.
+### Ver archivo 02-auth.rest para obtener un token.
+
+### Después de obtener token, edita 00-variables.rest:
+### @accessToken = tu_token_aqui
+
+### Luego puedes ejecutar:
+###
+### 1. Ver datos del usuario autenticado:
+###    GET /auth/me
+###
+### 2. Obtener historial de compras:
+###    GET /purchase/history/{wallet}
+###
+### 3. Solicitar compra de tokens:
+###    POST /purchase/initiate
+###
+### 4. Solicitar retiro de tokens:
+###    POST /exchange/withdraw
+###
+### 5. Ver notificaciones:
+###    GET /notifications
+
+###
+
+### ============================================================================
+### ARCHIVOS RECOMENDADOS POR CASO DE USO
+### ============================================================================
+
+###
+### Para empezar:
+### - 01-health.rest (verificar API)
+### - 03-purchase.rest (información de precios)
+### - 05-prowallet.rest (información del contrato)
+###
+### Para autenticación:
+### - 02-auth.rest (login y registro)
+###
+### Para operaciones:
+### - 03-purchase.rest (compra de tokens)
+### - 04-exchange.rest (intercambio y retiros)
+### - 06-transfer.rest (transferencias)
+###
+### Casos complejos:
+### - 11-scenarios.rest (flujos completos)
+###
+### Debugging:
+### - 08-solana-proxy.rest (acceso directo a Solana RPC)
+### - 10-admin.rest (endpoints administrativos)
+
+###
+
+### ============================================================================
+### VARIABLES IMPORTANTES
+### ============================================================================
+
+### Edita 00-variables.rest para personalizar:
+###
+### @api = URL de la API
+### @accessToken = Tu token JWT después de login
+### @testWallet = Tu wallet Solana para pruebas
+### @tokenMint = Mint del token GAPC
+### @transactionId = ID de transacción para tracking

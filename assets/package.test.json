@@ -1,0 +1,39 @@
+/**
+ * Package.json scripts para testing
+ */
+
+{
+  "name": "prowallet-tests",
+  "version": "1.0.0",
+  "description": "Test configuration for ProWallet project",
+  "scripts": {
+    "test": "vitest",
+    "test:ui": "vitest --ui",
+    "test:run": "vitest run",
+    "test:coverage": "vitest run --coverage",
+    "test:watch": "vitest --watch",
+    "test:related": "vitest related",
+    "test:ci": "vitest run --coverage --reporter=junit --outputFile=./test-results/junit.xml",
+    "test:core": "vitest run --run apps/web/hooks/purchase/__tests__/validators.test.ts",
+    "test:hooks": "vitest run --run apps/web/hooks/purchase/__tests__/hooks.test.ts",
+    "test:services": "vitest run --run apps/api/src/services/**/__tests__/**/*.test.ts",
+    "lint:test": "eslint apps/**/__tests__/**/*.{js,ts,jsx,tsx} --fix",
+    "typecheck:test": "tsc --noEmit --project apps/web/tsconfig.json",
+    "clean:coverage": "rm -rf coverage",
+    "pretest": "npm run typecheck:test"
+  },
+  "devDependencies": {
+    "vitest": "^1.0.0",
+    "@vitest/ui": "^1.0.0",
+    "@vitest/coverage-v8": "^1.0.0",
+    "@testing-library/react": "^14.0.0",
+    "@testing-library/jest-dom": "^6.0.0",
+    "@testing-library/user-event": "^14.0.0",
+    "@types/node": "^20.0.0",
+    "jsdom": "^23.0.0",
+    "happy-dom": "^12.0.0"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

@@ -1,0 +1,138 @@
+### 📄 PURCHASE - Métodos de Pago Disponibles
+### GET /api/v1/purchase/payment-methods
+### Obtiene todos los métodos de pago disponibles
+### Documentación: Incluye límites, fees y configuración de cada método
+
+@baseUrl = https://servicioshilda.orioncaribe.com/api/v1
+
+###
+# Obtener métodos de pago disponibles
+GET {{baseUrl}}/purchase/payment-methods
+Accept: application/json
+
+###
+# RESPUESTA ESPERADA (200 OK):
+# {
+#   "success": true,
+#   "code": 200,
+#   "message": "Métodos de pago obtenidos exitosamente",
+#   "data": {
+#     "fiat": {
+#       "creditCard": {
+#         "name": "Tarjeta de Crédito",
+#         "provider": "stripe",
+#         "enabled": true,
+#         "currencies": ["USD", "EUR", "ARS"],
+#         "minAmount": 10,
+#         "maxAmount": 10000,
+#         "fee": 2.9,
+#         "feeType": "percentage",
+#         "processingTime": "instant",
+#         "countries": ["US", "EU", "AR", "..."]
+#       },
+#       "bankTransfer": {
+#         "name": "Transferencia Bancaria",
+#         "provider": "stripe",
+#         "enabled": false,
+#         "currencies": ["USD", "EUR"],
+#         "minAmount": 100,
+#         "maxAmount": 100000,
+#         "fee": 1.0,
+#         "feeType": "percentage",
+#         "processingTime": "1-3 days",
+#         "countries": ["US", "EU"]
+#       }
+#     },
+#     "crypto": {
+#       "solana": {
+#         "name": "Solana (SOL)",
+#         "ticker": "SOL",
+#         "enabled": true,
+#         "minAmount": 0.001,
+#         "maxAmount": 1000,
+#         "fee": 0.00001,
+#         "feeType": "fixed",
+#         "processingTime": "30 seconds",
+#         "network": "solana",
+#         "chainId": "mainnet-beta",
+#         "rpcEndpoint": "https://api.mainnet-beta.solana.com"
+#       },
+#       "usdc": {
+#         "name": "USD Coin (USDC)",
+#         "ticker": "USDC",
+#         "enabled": true,
+#         "minAmount": 10,
+#         "maxAmount": 1000000,
+#         "fee": 0.001,
+#         "feeType": "fixed",
+#         "processingTime": "30 seconds",
+#         "network": "solana",
+#         "mint": "EPjFWaJUNzLjnwKA9rM8jMVhh5r4VwVt8VF8R8ZQfKAs"
+#       }
+#     },
+#     "alternative": {
+#       "coingate": {
+#         "name": "Coingate",
+#         "provider": "coingate",
+#         "enabled": true,
+#         "supportedCoins": [
+#           "BTC", "ETH", "LTC", "XRP", "DASH", 
+#           "DOGE", "USDT", "USDC", "MATIC", "..."
+#         ],
+#         "minAmount": 10,
+#         "maxAmount": 500000,
+#         "fee": 1.0,
+#         "feeType": "percentage",
+#         "processingTime": "5-60 minutes"
+#       },
+#       "nowpayments": {
+#         "name": "NOWPayments",
+#         "provider": "nowpayments",
+#         "enabled": true,
+#         "supportedCoins": [
+#           "BTC", "ETH", "LTC", "XRP", "USDT", 
+#           "USDC", "MATIC", "SOL", "..."
+#         ],
+#         "minAmount": 5,
+#         "maxAmount": 1000000,
+#         "fee": 0.5,
+#         "feeType": "percentage",
+#         "processingTime": "2-30 minutes"
+#       }
+#     },
+#     "native": {
+#       "solana": {
+#         "name": "Solana Native Transfer",
+#         "chainId": "mainnet-beta",
+#         "enabled": true,
+#         "minAmount": 0.001,
+#         "maxAmount": 10000,
+#         "fee": 0.00005,
+#         "programId": "11111111111111111111111111111112"
+#       }
+#     }
+#   }
+# }
+
+###
+# ESTRUCTURA DE RESPUESTA:
+# - fiat: Métodos de pago en dinero fíat (tarjeta, transferencia)
+# - crypto: Criptomonedas (SOL, USDC, etc.)
+# - alternative: Proveedores alternativos (Coingate, NOWPayments)
+# - native: Transferencias nativas
+
+###
+# CAMPOS EN CADA MÉTODO:
+# - name: Nombre del método
+# - provider: Proveedor (stripe, solana, coingate, etc.)
+# - enabled: Si está disponible
+# - minAmount: Monto mínimo
+# - maxAmount: Monto máximo
+# - fee: Fee/comisión
+# - feeType: Tipo de fee (percentage o fixed)
+# - processingTime: Tiempo de procesamiento
+
+###
+# ERRORES POSIBLES:
+# 429: Rate limit excedido
+# 500: Error interno del servidor

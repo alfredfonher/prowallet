@@ -1,0 +1,153 @@
+### 📄 PURCHASE - Historial de Precios
+### GET /api/v1/purchase/price-history/:timeframe
+### Obtiene datos históricos de precios para gráficos
+### Documentación: Soporta múltiples timeframes
+
+@baseUrl = https://servicioshilda.orioncaribe.com/api/v1
+
+###
+# Obtener historial de precios últimos 24 horas (por hora)
+GET {{baseUrl}}/purchase/price-history/1h
+Accept: application/json
+
+###
+# Obtener historial de precios últimos 7 días (por día)
+GET {{baseUrl}}/purchase/price-history/1d
+Accept: application/json
+
+###
+# Obtener historial de precios últimos 30 días (por día)
+GET {{baseUrl}}/purchase/price-history/7d
+Accept: application/json
+
+###
+# Obtener historial de precios últimos 90 días (por día)
+GET {{baseUrl}}/purchase/price-history/30d
+Accept: application/json
+
+###
+# Obtener historial de precios últimos 1 año (por semana)
+GET {{baseUrl}}/purchase/price-history/1y
+Accept: application/json
+
+###
+# RESPUESTA ESPERADA (200 OK):
+# {
+#   "success": true,
+#   "code": 200,
+#   "message": "Historial de precios obtenido exitosamente",
+#   "data": {
+#     "timeframe": "1d",
+#     "currency": "USD",
+#     "dataPoints": 7,
+#     "startDate": "2024-11-30T00:00:00Z",
+#     "endDate": "2024-12-07T00:00:00Z",
+#     "highPrice": 0.0125,
+#     "lowPrice": 0.0119,
+#     "averagePrice": 0.01224,
+#     "priceChangePercentage": 2.5,
+#     "prices": [
+#       {
+#         "timestamp": "2024-11-30T00:00:00Z",
+#         "date": "2024-11-30",
+#         "price": 0.01200,
+#         "volume": 45000.50,
+#         "marketCap": 120000,
+#         "change": 0,
+#         "changePercentage": 0
+#       },
+#       {
+#         "timestamp": "2024-12-01T00:00:00Z",
+#         "date": "2024-12-01",
+#         "price": 0.01210,
+#         "volume": 52000.75,
+#         "marketCap": 121000,
+#         "change": 0.0010,
+#         "changePercentage": 0.833
+#       },
+#       {
+#         "timestamp": "2024-12-02T00:00:00Z",
+#         "date": "2024-12-02",
+#         "price": 0.01205,
+#         "volume": 48000.25,
+#         "marketCap": 120500,
+#         "change": -0.0005,
+#         "changePercentage": -0.413
+#       },
+#       {
+#         "timestamp": "2024-12-03T00:00:00Z",
+#         "date": "2024-12-03",
+#         "price": 0.01225,
+#         "volume": 55000.00,
+#         "marketCap": 122500,
+#         "change": 0.0020,
+#         "changePercentage": 1.656
+#       },
+#       {
+#         "timestamp": "2024-12-04T00:00:00Z",
+#         "date": "2024-12-04",
+#         "price": 0.01219,
+#         "volume": 50000.00,
+#         "marketCap": 121900,
+#         "change": -0.0006,
+#         "changePercentage": -0.490
+#       },
+#       {
+#         "timestamp": "2024-12-05T00:00:00Z",
+#         "date": "2024-12-05",
+#         "price": 0.01220,
+#         "volume": 51000.00,
+#         "marketCap": 122000,
+#         "change": 0.0001,
+#         "changePercentage": 0.082
+#       },
+#       {
+#         "timestamp": "2024-12-07T00:00:00Z",
+#         "date": "2024-12-07",
+#         "price": 0.01230,
+#         "volume": 53000.25,
+#         "marketCap": 123000,
+#         "change": 0.0010,
+#         "changePercentage": 0.820
+#       }
+#     ]
+#   }
+# }
+
+###
+# TIMEFRAMES SOPORTADOS:
+# - 1h: Últimas 24 horas, datos por hora
+# - 1d: Últimos 7 días, datos por día
+# - 7d: Últimos 30 días, datos por día
+# - 30d: Últimos 90 días, datos por día
+# - 1y: Último año, datos por semana
+
+###
+# CAMPOS EN CADA DATA POINT:
+# - timestamp: ISO 8601 timestamp
+# - date: Fecha formateada (YYYY-MM-DD)
+# - price: Precio en USD
+# - volume: Volumen de trading
+# - marketCap: Capitalización de mercado
+# - change: Cambio de precio absoluto
+# - changePercentage: Cambio de precio en porcentaje
+
+###
+# RESUMEN DISPONIBLE:
+# - highPrice: Máximo en el período
+# - lowPrice: Mínimo en el período
+# - averagePrice: Precio promedio
+# - priceChangePercentage: Cambio total del período
+
+###
+# USOS:
+# - Gráficos de precios
+# - Análisis técnico
+# - Tendencias de mercado
+# - Decisiones de inversión
+
+###
+# ERRORES POSIBLES:
+# 400: Timeframe inválido
+# 429: Rate limit excedido
+# 500: Error al obtener datos históricos

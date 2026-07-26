@@ -1,0 +1,183 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Transaction {
+  id              String    @id @default(cuid())
+  transactionId   String    @unique
+  signature       String?
+  blockSlot       Int?
+  walletAddress   String
+  transactionType String
+  tokenAmount     Float
+  paymentAmount   Float?
+  paymentToken    String    @default("SOL")
+  tokenPrice      Float?
+  status          String    @default("pending")
+  gasUsed         Float?
+  gasCost         Float?
+  error           String?
+  metadata        String    @default("{}")
+  minted          Boolean   @default(false)
+  minting         Boolean   @default(false)
+  mintSignature   String?
+  mintStartedAt   DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  completedAt     DateTime?
+
+  @@index([walletAddress])
+  @@index([transactionId])
+  @@index([signature])
+  @@index([blockSlot])
+  @@index([status])
+  @@index([minted])
+  @@index([mintSignature])
+  @@index([completedAt])
+  @@index([createdAt])
+  @@index([transactionType, status, createdAt])
+  @@index([paymentToken, createdAt])
+  @@map("transactions")
+}
+
+model MetadataJob {
+  id            String    @id @default(cuid())
+  jobId         String    @unique
+  transactionId String
+  jobType       String
+  status        String
+  metadata      String    @default("{}")
+  retryCount    Int       @default(0)
+  maxRetries    Int       @default(3)
+  error         String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  completedAt   DateTime?
+
+  @@index([transactionId])
+  @@index([status])
+  @@index([jobType])
+  @@index([createdAt])
+  @@map("metadata_jobs")
+}
+
+model User {
+  id                      Int                         @id @default(autoincrement())
+  email                   String                      @unique @default("")
+  solanaPublicKey         String?                     @unique
+  tokenBalance            BigInt                      @default(0)
+  usdSpent                Float                       @default(0)
+  createdAt               DateTime                    @default(now())
+  updatedAt               DateTime                    @updatedAt
+  password                String?
+  is_email_verified       Boolean                     @default(false)
+  email_verified_at       DateTime?
+  password_reset_token    String?
+  password_reset_expires  DateTime?
+  transactions            UserTransaction[]
+  transfers               UserTransfer[]
+  email_verification_tokens EmailVerificationToken[]
+  refresh_tokens          RefreshToken[]
+
+  @@index([email])
+  @@index([is_email_verified])
+  @@index([password_reset_token])
+  @@map("users")
+}
+
+model EmailVerificationToken {
+  id        Int      @id @default(autoincrement())
+  user_id   Int
+  token_hash String   @unique
+  expires_at DateTime
+  created_at DateTime @default(now())
+  used_at   DateTime?
+  user      User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@index([user_id])
+  @@index([expires_at])
+  @@map("email_verification_tokens")
+}
+
+model RefreshToken {
+  id        Int      @id @default(autoincrement())
+  user_id   Int
+  token_hash String   @unique
+  expires_at DateTime
+  created_at DateTime @default(now())
+  used_at   DateTime?
+  revoked_at DateTime?
+  user      User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@index([user_id])
+  @@index([expires_at])
+  @@index([revoked_at])
+  @@map("refresh_tokens")
+}
+
+model UserTransaction {
+  id           Int      @id @default(autoincrement())
+  type         String
+  email        String
+  amountTokens BigInt
+  amountUsd    Float
+  priceAtTx    Float
+  status       String   @default("completed")
+  createdAt    DateTime @default(now())
+  user         User     @relation(fields: [email], references: [email], onDelete: Cascade)
+
+  @@index([email])
+  @@index([type])
+  @@index([createdAt])
+  @@map("user_transactions")
+}
+
+model UserTransfer {
+  id           Int      @id @default(autoincrement())
+  fromEmail     String
+  toEmail       String
+  amountTokens BigInt
+  status       String   @default("completed")
+  createdAt    DateTime @default(now())
+  fromUser     User     @relation(fields: [fromEmail], references: [email], onDelete: Cascade)
+
+  @@index([fromEmail])
+  @@index([toEmail])
+  @@index([createdAt])
+  @@map("user_transfers")
+}
+
+model WhitelistEntry {
+  id      Int      @id @default(autoincrement())
+  wallet  String   @unique
+  addedBy String?
+  addedAt DateTime @default(now())
+  source  String   @default("offchain")
+
+  @@index([wallet])
+  @@index([addedBy])
+  @@map("whitelist_entries")
+}
+
+model SavedAddress {
+  id                String   @id @default(cuid())
+  wallet_address    String
+  recipient_address String
+  label             String
+  description       String?
+  is_favorite       Boolean  @default(false)
+  created_at        DateTime @default(now())
+  updated_at        DateTime @updatedAt
+
+  @@unique([wallet_address, recipient_address])
+  @@index([wallet_address])
+  @@index([recipient_address])
+  @@index([is_favorite])
+  @@index([created_at])
+  @@map("saved_addresses")
+}

@@ -1,0 +1,204 @@
+FROM node:24-slim
+
+WORKDIR /app
+
+# Instalar OpenSSL (requerido por Prisma)
+RUN apt-get update -y && apt-get install -y openssl ca-certificates && rm -rf /var/lib/apt/lists/*
+
+# Step 1: Copiar pnpm config files
+COPY pnpm-lock.yaml pnpm-workspace.yaml .pnpmfile.cjs* ./
+# Step 2: Copiar package.json files
+COPY package.json ./
+COPY apps/api/package.json ./apps/api/
+COPY packages/ ./packages/
+COPY apps/api/idl/prowallet_contract.json ./apps/api/idl/
+COPY apps/api/idl/prowallet.json ./apps/api/idl/
+
+# Step 3: Instalar pnpm globalmente
+RUN npm install -g pnpm@10.24.0
+
+# Step 4: Instalar todas las dependencias del workspace con pnpm
+RUN pnpm install --frozen-lockfile
+
+# Step 5: Copiar el resto del código fuente
+COPY . .
+
+# Step 6: Generar Prisma client ANTES del build
+RUN pnpm --filter prowallet-api exec prisma generate
+
+# Step 7: Build del API
+RUN pnpm --filter prowallet-api build
+
+# Step 8: Limpiar archivos y directorios no necesarios para runtime
+RUN rm -rf .git .gitignore .turbo .vscode documentation scripts && \
+    rm -rf apps/web packages/*/src .env.example && \
+    find . -name "*.map" -delete && \
+    find . -name "*.ts" -not -path "*/node_modules/*" -delete && \
+    find . -name "tsconfig.json" -not -path "*/node_modules/*" -delete && \
+    find . -type d -name ".next" -exec rm -rf {} + 2>/dev/null || true
+
+# Step 9: Copiar entrypoint script
+COPY apps/api/docker-entrypoint.sh /app/
+RUN chmod +x /app/docker-entrypoint.sh
+
+# ============================================================================
+# ENVIRONMENT VARIABLES - Production Defaults
+# ============================================================================
+# 🔐 SECURITY NOTE: Secrets MUST be passed at runtime via docker-compose
+# See .env.docker.example for required secrets
+#
+# Do NOT add DATABASE_URL, API_KEYS, or PRIVATE_KEYS here!
+# These must come from environment variables at runtime.
+# ============================================================================
+
+# Server Configuration
+ENV NODE_ENV=production
+ENV PORT=3001
+
+# ============================================================================
+# SOLANA NETWORK CONFIGURATION
+# ============================================================================
+# SOLANA_NETWORK must be one of: "mainnet-beta", "testnet", "devnet"
+# THESE SHOULD BE OVERRIDDEN AT RUNTIME with actual values from .env.docker
+ENV SOLANA_NETWORK=mainnet-beta
+ENV SOLANA_RPC_URL=https://mainnet.helius-rpc.com/?api-key=97cdbcf5-714f-4e61-b355-93368a279e34
+ENV FALLBACK_SOLANA_RPC_URL=https://api.rpcpool.com
+
+# ============================================================================
+# HELIUS API ENDPOINTS (for parsing transactions)
+# ============================================================================
+# THESE SHOULD BE OVERRIDDEN AT RUNTIME with actual values from .env.docker
+ENV HELIUS_API_KEY=97cdbcf5-714f-4e61-b355-93368a279e34
+ENV HELIUS_PARSE_TRANSACTION_URL=https://api-mainnet.helius-rpc.com/v0/transactions/?api-key=97cdbcf5-714f-4e61-b355-93368a279e34
+ENV HELIUS_PARSE_HISTORY_URL=https://api-mainnet.helius-rpc.com/v0/addresses/{address}/transactions/?api-key=97cdbcf5-714f-4e61-b355-93368a279e34
+
+# ============================================================================
+# TOKEN CONFIGURATION (from local development)
+# These match the .env.local values for consistency
+# ============================================================================
+ENV TOKEN_MINT=D8TwbwGGmyucrxPB9uscait27caVgeqYHPpyN3XXjUX3
+ENV TOKEN_NAME=ProWallet
+ENV TOKEN_SYMBOL=GAPC
+ENV TOKEN_DECIMALS=9
+ENV MAX_SUPPLY=1000000000
+ENV BASE_TOKEN_PRICE=0.01
+
+# ============================================================================
+# BONDING CURVE & PRICING
+# ============================================================================
+ENV BONDING_CURVE_MULTIPLIER=1.5
+ENV PRICING_MODE=bonding
+
+# ============================================================================
+# GAS & PLATFORM FEES
+# ============================================================================
+ENV GAS_ESTIMATE_SOL=0.000005
+ENV PLATFORM_COMMISSION_SOL=0.000005
+
+# ============================================================================
+# WALLETS & AUTHORITIES (from local development)
+# These are PUBLIC KEYS - safe to hardcode
+# ============================================================================
+ENV PROVIDER_PUBLIC_KEY=EizJ7W8AbhUAPdSjdEjyKJDEmk7MSJnR6JfH2h2gitLH
+ENV PROVIDER_ATA=DuVzGwE9waTmPHjsto3brPbFZaqMjW5AnDQEA1mK1ZZN
+ENV COMPANY_WALLET=EizJ7W8AbhUAPdSjdEjyKJDEmk7MSJnR6JfH2h2gitLH
+ENV COMMISSION_WALLET=EizJ7W8AbhUAPdSjdEjyKJDEmk7MSJnR6JfH2h2gitLH
+ENV AUTHORITY_WALLET=EizJ7W8AbhUAPdSjdEjyKJDEmk7MSJnR6JfH2h2gitLH
+ENV TOKEN_ACCOUNT=DuVzGwE9waTmPHjsto3brPbFZaqMjW5AnDQEA1mK1ZZN
+ENV TREASURY_WALLET=EizJ7W8AbhUAPdSjdEjyKJDEmk7MSJnR6JfH2h2gitLH
+
+# ============================================================================
+# KEYPAIR PATHS (REQUIRED at runtime)
+# These paths are where IDL files are mounted in the container
+# The ACTUAL private key comes from .env.docker via TREASURY_PRIVATE_KEY
+# ============================================================================
+ENV PROVIDER_WALLET=/app/apps/api/idl/prowallet.json
+ENV KEYPAIR_PATH=/app/apps/api/idl/prowallet.json
+ENV AUTHORITY_KEYPAIR_PATH=/app/apps/api/idl/prowallet.json
+ENV PROGRAM_KEYPAIR=/app/apps/api/idl/prowallet_contract.json
+
+# ============================================================================
+# PROGRAM CONFIGURATION & IDL ARTIFACTS
+# ============================================================================
+ENV PROWALLET_PROGRAM_ID=7sa2XazRU4R6DcsNLGMWcX4nabCzWwjj3Awfh1gxhtem
+ENV PROGRAM_ID=7sa2XazRU4R6DcsNLGMWcX4nabCzWwjj3Awfh1gxhtem
+ENV PROWALLET_IDL=/app/apps/api/idl/prowallet_contract.json
+ENV IDL_PROWALLET_CONTRACT=/app/apps/api/idl/prowallet_contract.json
+ENV IDL_PROWALLET_DEVNET=/app/apps/api/idl/prowallet_contract.devnet.json
+
+# ============================================================================
+# TOKEN CONFIGURATION (ALIAS for compatibility)
+# ============================================================================
+ENV TOKEN_MINT_ADDRESS=D8TwbwGGmyucrxPB9uscait27caVgeqYHPpyN3XXjUX3
+
+# ============================================================================
+# JWT AUTHENTICATION (DEVELOPMENT DEFAULT - CHANGE IN PRODUCTION)
+# ============================================================================
+# For production, this MUST be overridden with a strong random secret
+ENV JWT_SECRET=9f3c1a8e6b2d4f709c8a5e1d3b7f2a4c
+
+# ============================================================================
+# DATABASE CONFIGURATION (REQUIRED - must come from runtime)
+# See .env.docker for actual connection details
+# ============================================================================
+# ENV DATABASE_URL=SET_AT_RUNTIME
+
+# ============================================================================
+# API CONFIGURATION
+# ============================================================================
+ENV API_VERSION=v1
+ENV API_PREFIX=/api
+# ALLOWED_ORIGINS for CORS - must match frontend origin exactly
+ENV ALLOWED_ORIGINS=https://exchange.gapstation.net,http://localhost:3000,http://localhost:3001,http://localhost:5173
+
+# ============================================================================
+# RATE LIMITING
+# ============================================================================
+ENV RATE_LIMIT_WINDOW_MS=900000
+ENV RATE_LIMIT_MAX_REQUESTS=900000
+ENV PURCHASE_RATE_LIMIT_MAX=900000
+ENV PURCHASE_RATE_LIMIT_WINDOW_MS=900000
+
+# ============================================================================
+# PURCHASE LIMITS
+# ============================================================================
+ENV MIN_PURCHASE_AMOUNT=0.000000001
+ENV MAX_PURCHASE_AMOUNT=10000
+
+# ============================================================================
+# EXCHANGE & PRICING
+# ============================================================================
+ENV EXCHANGE_PROVIDER_URL=https://api.coingecko.com/api/v3/coins/markets
+ENV EXCHANGE_IDS=bitcoin,ethereum,solana,cardano,polkadot,chainlink,uniswap,litecoin,ripple,polygon
+ENV EXCHANGE_VS_CURRENCIES=usd,eur,gbp
+ENV EXCHANGE_TIMEOUT_MS=7000
+ENV EXCHANGE_MAX_RETRIES=3
+
+# ============================================================================
+# FEATURE FLAGS & TESTING
+# ============================================================================
+ENV TEST_MODE_FREE_TOKEN=false
+ENV MOCK_TOKEN_INFO=false
+ENV ALLOW_OFFCHAIN_LINK=true
+ENV WHITELIST_ENABLED=true
+ENV SKIP_MINT_ON_CONFIRM=false
+
+# ============================================================================
+# LOGGING
+# ============================================================================
+ENV LOG_LEVEL=info
+ENV IDL_PROWALLET_CONTRACT=idl/prowallet_contract.json
+ENV IDL_PROWALLET_DEVNET=idl/prowallet_contract.devnet.json
+
+WORKDIR /app/apps/api
+
+# Copiar Prisma schema para migraciones en runtime
+COPY apps/api/prisma ./prisma
+
+EXPOSE 3001
+
+HEALTHCHECK --interval=120s --timeout=60s --start-period=120s --retries=5 \
+    CMD curl -f http://localhost:3001/api/v1/health || exit 1
+
+ENTRYPOINT ["/app/docker-entrypoint.sh"]
+CMD ["node", "dist/server.js"]

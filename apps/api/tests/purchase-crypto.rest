@@ -1,0 +1,18 @@
+### Compra de ProWallet en Solana Devnet
+POST https://servicioshilda.orioncaribe.com/api/v1/purchase
+Content-Type: application/json
+
+{
+  "wallet": "3deLF3EPKKSGFJPyESx7igyeXZgXjWe1z5JoE5ZqG2Uw",
+  "amount": 100, // cantidad de tokens a comprar
+  "network": "devnet"
+}
+
+### Firma de compra (ejemplo, si el endpoint existe)
+POST https://servicioshilda.orioncaribe.com/api/v1/purchase/sign
+Content-Type: application/json
+
+{
+  "wallet": "3deLF3EPKKSGFJPyESx7igyeXZgXjWe1z5JoE5ZqG2Uw",
+  "purchaseId": "<ID_DE_COMPRA>"
+}

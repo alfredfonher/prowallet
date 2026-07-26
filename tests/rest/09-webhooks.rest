@@ -1,0 +1,90 @@
+### ============================================================================
+### WEBHOOK ENDPOINTS
+### ============================================================================
+### Webhooks para notificaciones de pagos y eventos externos
+
+@api = https://servicioshilda.orioncaribe.com/api/v1
+
+### ============================================================================
+### 1. POST /payments/webhook - Payment Confirmation Webhook
+### ============================================================================
+### Webhook que recibe confirmaciones de pago de proveedores externos
+### Nota: Este endpoint debería estar protegido con HMAC o API key
+
+POST {{@api}}/payments/webhook
+Content-Type: application/json
+
+{
+  "event": "payment.confirmed",
+  "paymentId": "pay_12345",
+  "transactionId": "tx_12345",
+  "status": "completed",
+  "amount": 100,
+  "walletAddress": "4Nd1m1Q5WJGj5CqPKYrZL2g4X2Y8Z3A4B5C6D7E8",
+  "metadata": {
+    "provider": "stripe",
+    "timestamp": "2024-01-01T12:00:00Z"
+  }
+}
+
+### Response should be 200 OK with acknowledgment
+
+
+### ============================================================================
+### 2. POST /payments/webhook - Payment Failed Webhook
+### ============================================================================
+
+POST {{@api}}/payments/webhook
+Content-Type: application/json
+
+{
+  "event": "payment.failed",
+  "paymentId": "pay_12345",
+  "transactionId": "tx_12345",
+  "status": "failed",
+  "reason": "insufficient_funds",
+  "walletAddress": "4Nd1m1Q5WJGj5CqPKYrZL2g4X2Y8Z3A4B5C6D7E8",
+  "metadata": {
+    "provider": "stripe",
+    "timestamp": "2024-01-01T12:00:00Z"
+  }
+}
+
+
+### ============================================================================
+### 3. POST /payments/webhook - Refund Webhook
+### ============================================================================
+
+POST {{@api}}/payments/webhook
+Content-Type: application/json
+
+{
+  "event": "payment.refunded",
+  "paymentId": "pay_12345",
+  "refundId": "ref_12345",
+  "amount": 50,
+  "status": "refunded",
+  "walletAddress": "4Nd1m1Q5WJGj5CqPKYrZL2g4X2Y8Z3A4B5C6D7E8",
+  "metadata": {
+    "provider": "stripe",
+    "reason": "customer_request",
+    "timestamp": "2024-01-01T12:00:00Z"
+  }
+}
+
+
+### ============================================================================
+### 4. POST /payments/webhook - Transaction Status Webhook
+### ============================================================================
+
+POST {{@api}}/payments/webhook
+Content-Type: application/json
+
+{
+  "event": "transaction.status",
+  "transactionId": "tx_12345",
+  "status": "confirmed",
+  "confirmations": 32,
+  "timestamp": "2024-01-01T12:00:00Z"
+}
+

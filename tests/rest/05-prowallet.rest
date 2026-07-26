@@ -1,0 +1,115 @@
+### ============================================================================
+### PROWALLET CONTRACT ENDPOINTS
+### ============================================================================
+### Información y estadísticas del contrato PROWALLET
+
+@api = https://servicioshilda.orioncaribe.com/api/v1
+@tokenMint = D8TwbwGGmyucrxPB9uscait27caVgeqYHPpyN3XXjUX3
+
+### ============================================================================
+### 1. GET /prowallet/contract-info - Get Contract Information
+### ============================================================================
+### Obtiene información detallada del contrato inteligente
+
+GET {{@api}}/prowallet/contract-info
+
+### Response should be 200 OK with:
+### {
+###   "success": true,
+###   "contractAddress": "7sa2XazRU4R6DcsNLGMWcX4nabCzWwjj3Awfh1gxhtem",
+###   "tokenMint": "D8TwbwGGmyucrxPB9uscait27caVgeqYHPpyN3XXjUX3",
+###   "authority": "EizJ7W8AbhUAPdSjdEjyKJDEmk7MSJnR6JfH2h2gitLH",
+###   "totalSupply": "1000000000",
+###   "decimals": 9,
+###   "createdAt": "2024-01-01T00:00:00Z"
+### }
+
+
+### ============================================================================
+### 2. GET /prowallet/whitelist - Get Whitelist
+### ============================================================================
+### Lista de wallets whitelisteadas
+
+GET {{@api}}/prowallet/whitelist
+
+### Response should be 200 OK with array of whitelisted wallets
+
+
+### ============================================================================
+### 3. GET /prowallet/whitelist/:wallet - Check Wallet Whitelist Status
+### ============================================================================
+### Verifica si un wallet está en whitelist
+
+GET {{@api}}/prowallet/whitelist/4Nd1m1Q5WJGj5CqPKYrZL2g4X2Y8Z3A4B5C6D7E8
+
+### Response should be 200 OK with:
+### {
+###   "success": true,
+###   "wallet": "4Nd1m1Q5WJGj5CqPKYrZL2g4X2Y8Z3A4B5C6D7E8",
+###   "whitelisted": true,
+###   "addedAt": "2024-01-01T00:00:00Z"
+### }
+
+
+### ============================================================================
+### 4. GET /prowallet/stats - Get Contract Statistics
+### ============================================================================
+### Estadísticas del contrato
+
+GET {{@api}}/prowallet/stats
+
+### Response should be 200 OK with:
+### {
+###   "success": true,
+###   "totalMinted": "500000000",
+###   "totalBurned": "0",
+###   "holders": 1500,
+###   "transfers": 5000,
+###   "transactions": 8000
+### }
+
+
+### ============================================================================
+### 5. GET /prowallet/holders - Get Token Holders List
+### ============================================================================
+### Lista de tenedores del token
+
+GET {{@api}}/prowallet/holders?limit=20&offset=0
+
+### Response should be 200 OK with array of holders
+
+
+### ============================================================================
+### 6. GET /prowallet/holder/:wallet - Get Holder Information
+### ============================================================================
+### Información de tenencias para un wallet específico
+
+GET {{@api}}/prowallet/holder/4Nd1m1Q5WJGj5CqPKYrZL2g4X2Y8Z3A4B5C6D7E8
+
+### Response should be 200 OK with:
+### {
+###   "success": true,
+###   "wallet": "4Nd1m1Q5WJGj5CqPKYrZL2g4X2Y8Z3A4B5C6D7E8",
+###   "balance": "1000000000",
+###   "lastUpdated": "2024-01-01T12:00:00Z"
+### }
+
+
+### ============================================================================
+### 7. GET /prowallet/transfers - Get Recent Transfers
+### ============================================================================
+### Transferencias recientes del token
+
+GET {{@api}}/prowallet/transfers?limit=20
+
+### Response should be 200 OK with array of transfers
+
+
+### ============================================================================
+### 8. GET /prowallet/transfers/:wallet - Get Wallet Transfers
+### ============================================================================
+### Transferencias de un wallet específico
+
+GET {{@api}}/prowallet/transfers/4Nd1m1Q5WJGj5CqPKYrZL2g4X2Y8Z3A4B5C6D7E8?limit=20
+
+### Response should be 200 OK with array of transfers for wallet

@@ -1,0 +1,936 @@
+import { Request, Response, Router } from "express";
+import { body, param } from "express-validator";
+import { StatusFlow, StatusFlowCodes } from "status-flow";
+import {
+    handleValidationErrors,
+    strictRateLimitMiddleware,
+    validateAddressParam,
+    validateSignatureParam,
+    validateSolanaAddress,
+    validateTransfer,
+    validateWalletParam,
+    validateWhitelistAdd,
+    validateWhitelistRemove,
+} from "../middleware";
+
+import { solanaService } from "../services/solana.service";
+import { prowalletService } from "../services/prowallet.service";
+
+const router: Router = Router();
+
+// [swagger documentation removed]
+router.get("/contract-info", async (req: Request, res: Response) => {
+    try {
+        const contractInfo = await prowalletService.getContractInfo();
+        res.json(
+            StatusFlow({
+                code: StatusFlowCodes.OK,
+                lang: "es",
+                extra: contractInfo,
+            })
+        );
+    } catch (error) {
+        res.status(500).json(
+            StatusFlow({
+                code: StatusFlowCodes.INTERNAL_SERVER_ERROR,
+                lang: "es",
+                extra: {
+                    error:
+                        error instanceof Error
+                            ? error.message
+                            : "Unknown error",
+                },
+            })
+        );
+    }
+});
+
+// [swagger documentation removed]
+router.get("/whitelist", async (req: Request, res: Response) => {
+    try {
+        const whitelist = await prowalletService.getWhitelist();
+        res.json(
+            StatusFlow({
+                code: StatusFlowCodes.OK,
+                lang: "es",
+                extra: {
+                    whitelist,
+                    count: whitelist.length,
+                },
+            })
+        );
+    } catch (error) {
+        res.status(500).json(
+            StatusFlow({
+                code: StatusFlowCodes.INTERNAL_SERVER_ERROR,
+                lang: "es",
+                extra: {
+                    error:
+                        error instanceof Error
+                            ? error.message
+                            : "Unknown error",
+                },
+            })
+        );
+    }
+});
+
+// [swagger documentation removed]
+router.get(
+    "/whitelist/:wallet",
+    validateWalletParam,
+    async (req: Request, res: Response) => {
+        try {
+            const { wallet } = req.params;
+            const isWhitelisted = await prowalletService.isWhitelisted(wallet);
+            res.json(
+                StatusFlow({
+                    code: StatusFlowCodes.OK,
+                    lang: "es",
+                    extra: {
+                        wallet,
+                        isWhitelisted,
+                    },
+                })
+            );
+        } catch (error) {
+            res.status(500).json(
+                StatusFlow({
+                    code: StatusFlowCodes.INTERNAL_SERVER_ERROR,
+                    lang: "es",
+                    extra: {
+                        error:
+                            error instanceof Error
+                                ? error.message
+                                : "Unknown error",
+                    },
+                })
+            );
+        }
+    }
+);
+
+// [swagger documentation removed]
+router.post(
+    "/whitelist/add",
+    strictRateLimitMiddleware,
+    validateWhitelistAdd,
+    async (req: Request, res: Response) => {
+        try {
+            const { wallet, authority } = req.body;
+            const result = await prowalletService.addToWhitelist(
+                wallet,
+                authority
+            );
+            const statusCode = result.success
+                ? StatusFlowCodes.OK
+                : StatusFlowCodes.BAD_REQUEST;
+            res.status(statusCode === StatusFlowCodes.OK ? 200 : 400).json(
+                StatusFlow({
+                    code: statusCode,
+                    lang: "es",
+                    extra: result,
+                })
+            );
+        } catch (error) {
+            res.status(500).json(
+                StatusFlow({
+                    code: StatusFlowCodes.INTERNAL_SERVER_ERROR,
+                    lang: "es",
+                    extra: {
+                        error:
+                            error instanceof Error
+                                ? error.message
+                                : "Unknown error",
+                    },
+                })
+            );
+        }
+    }
+);
+
+// [swagger documentation removed]
+router.post(
+    "/whitelist/remove",
+    strictRateLimitMiddleware,
+    validateWhitelistRemove,
+    async (req: Request, res: Response) => {
+        try {
+            const { wallet, authority } = req.body;
+            const result = await prowalletService.removeFromWhitelist(
+                wallet,
+                authority
+            );
+            const statusCode = result.success
+                ? StatusFlowCodes.OK
+                : StatusFlowCodes.BAD_REQUEST;
+            res.status(statusCode === StatusFlowCodes.OK ? 200 : 400).json(
+                StatusFlow({
+                    code: statusCode,
+                    lang: "es",
+                    extra: result,
+                })
+            );
+        } catch (error) {
+            res.status(500).json(
+                StatusFlow({
+                    code: StatusFlowCodes.INTERNAL_SERVER_ERROR,
+                    lang: "es",
+                    extra: {
+                        error:
+                            error instanceof Error
+                                ? error.message
+                                : "Unknown error",
+                    },
+                })
+            );
+        }
+    }
+);
+
+// [swagger documentation removed]
+router.post(
+    "/transfer",
+    strictRateLimitMiddleware,
+    validateTransfer,
+    async (req: Request, res: Response) => {
+        try {
+            const { fromWallet, toWallet, amount, tokenMint } = req.body;
+            const result = await prowalletService.executeRestrictedTransfer({
+                fromWallet,
+                toWallet,
+                amount,
+                tokenMint,
+            });
+            const statusCode = result.success
+                ? StatusFlowCodes.OK
+                : StatusFlowCodes.BAD_REQUEST;
+            res.status(statusCode === StatusFlowCodes.OK ? 200 : 400).json(
+                StatusFlow({
+                    code: statusCode,
+                    lang: "es",
+                    extra: result,
+                })
+            );
+        } catch (error) {
+            res.status(500).json(
+                StatusFlow({
+                    code: StatusFlowCodes.INTERNAL_SERVER_ERROR,
+                    lang: "es",
+                    extra: {
+                        error:
+                            error instanceof Error
+                                ? error.message
+                                : "Unknown error",
+                    },
+                })
+            );
+        }
+    }
+);
+
+// [swagger documentation removed]
+router.get(
+    "/balance/:wallet",
+    validateWalletParam,
+    async (req: Request, res: Response) => {
+        try {
+            const { wallet } = req.params;
+            const { tokenMint } = req.query;
+            const balance = await prowalletService.getWalletBalance(
+                wallet,
+                tokenMint as string
+            );
+            res.json(
+                StatusFlow({
+                    code: StatusFlowCodes.OK,
+                    lang: "es",
+                    extra: balance,
+                })
+            );
+        } catch (error) {
+            res.status(500).json(
+                StatusFlow({
+                    code: StatusFlowCodes.INTERNAL_SERVER_ERROR,
+                    lang: "es",
+                    extra: {
+                        error:
+                            error instanceof Error
+                                ? error.message
+                                : "Unknown error",
+                    },
+                })
+            );
+        }
+    }
+);
+
+// [swagger documentation removed]
+router.get(
+    "/transactions/:wallet",
+    validateWalletParam,
+    async (req: Request, res: Response) => {
+        try {
+            const { wallet } = req.params;
+            const limit = Math.min(
+                parseInt(req.query.limit as string) || 10,
+                50
+            ); // Max 50 transactions
+            const transactions = await prowalletService.getWalletTransactions(
+                wallet,
+                limit
+            );
+            res.json(
+                StatusFlow({
+                    code: StatusFlowCodes.OK,
+                    lang: "es",
+                    extra: transactions,
+                })
+            );
+        } catch (error) {
+            res.status(500).json(
+                StatusFlow({
+                    code: StatusFlowCodes.INTERNAL_SERVER_ERROR,
+                    lang: "es",
+                    extra: {
+                        error:
+                            error instanceof Error
+                                ? error.message
+                                : "Unknown error",
+                    },
+                })
+            );
+        }
+    }
+);
+
+// [swagger documentation removed]
+router.get(
+    "/transaction/:signature",
+    validateSignatureParam,
+    async (req: Request, res: Response) => {
+        try {
+            const { signature } = req.params;
+            const transaction = await solanaService.getTransaction(signature);
+            res.json(
+                StatusFlow({
+                    code: StatusFlowCodes.OK,
+                    lang: "es",
+                    extra: {
+                        signature,
+                        transaction,
+                    },
+                })
+            );
+        } catch (error) {
+            res.status(500).json(
+                StatusFlow({
+                    code: StatusFlowCodes.INTERNAL_SERVER_ERROR,
+                    lang: "es",
+                    extra: {
+                        error:
+                            error instanceof Error
+                                ? error.message
+                                : "Unknown error",
+                    },
+                })
+            );
+        }
+    }
+);
+
+// [swagger documentation removed]
+router.get(
+    "/validate-address/:address",
+    validateAddressParam,
+    async (req: Request, res: Response) => {
+        try {
+            const { address } = req.params;
+            const isValid = solanaService.isValidAddress(address);
+            res.json(
+                StatusFlow({
+                    code: StatusFlowCodes.OK,
+                    lang: "es",
+                    extra: {
+                        address,
+                        isValid,
+                    },
+                })
+            );
+        } catch (error) {
+            res.status(500).json(
+                StatusFlow({
+                    code: StatusFlowCodes.INTERNAL_SERVER_ERROR,
+                    lang: "es",
+                    extra: {
+                        error:
+                            error instanceof Error
+                                ? error.message
+                                : "Unknown error",
+                    },
+                })
+            );
+        }
+    }
+);
+
+// ========== NEW ENDPOINTS FOR COMPLETE CONTRACT INTEGRATION ==========
+
+// [swagger documentation removed]
+router.post(
+    "/initialize",
+    strictRateLimitMiddleware,
+    [validateSolanaAddress("authority"), handleValidationErrors],
+    async (req: Request, res: Response) => {
+        try {
+            const { authority } = req.body;
+            const result = await prowalletService.initialize(authority);
+            const statusCode = result.success
+                ? StatusFlowCodes.OK
+                : StatusFlowCodes.BAD_REQUEST;
+            res.status(statusCode === StatusFlowCodes.OK ? 200 : 400).json(
+                StatusFlow({
+                    code: statusCode,
+                    lang: "es",
+                    extra: result,
+                })
+            );
+        } catch (error) {
+            res.status(500).json(
+                StatusFlow({
+                    code: StatusFlowCodes.INTERNAL_SERVER_ERROR,
+                    lang: "es",
+                    extra: {
+                        error:
+                            error instanceof Error
+                                ? error.message
+                                : "Unknown error",
+                    },
+                })
+            );
+        }
+    }
+);
+
+// [swagger documentation removed]
+router.post(
+    "/users/register",
+    strictRateLimitMiddleware,
+    [
+        validateSolanaAddress("userWallet"),
+        validateSolanaAddress("authority"),
+        body("shares")
+            .isInt({ min: 1 })
+            .withMessage("Shares must be a positive integer"),
+        body("merkleProof")
+            .isArray({ min: 1 })
+            .withMessage("Merkle proof is required"),
+        handleValidationErrors,
+    ],
+    async (req: Request, res: Response) => {
+        try {
+            const { userWallet, shares, merkleProof, authority } = req.body;
+            const result = await prowalletService.registerUser({
+                userWallet,
+                shares,
+                merkleProof,
+                authority,
+            });
+            const statusCode = result.success
+                ? StatusFlowCodes.OK
+                : StatusFlowCodes.BAD_REQUEST;
+            res.status(statusCode === StatusFlowCodes.OK ? 200 : 400).json(
+                StatusFlow({
+                    code: statusCode,
+                    lang: "es",
+                    extra: result,
+                })
+            );
+        } catch (error) {
+            res.status(500).json(
+                StatusFlow({
+                    code: StatusFlowCodes.INTERNAL_SERVER_ERROR,
+                    lang: "es",
+                    extra: {
+                        error:
+                            error instanceof Error
+                                ? error.message
+                                : "Unknown error",
+                    },
+                })
+            );
+        }
+    }
+);
+
+// [swagger documentation removed]
+router.get(
+    "/users/:userWallet",
+    validateWalletParam,
+    async (req: Request, res: Response) => {
+        try {
+            const { userWallet } = req.params;
+            const user = await prowalletService.getUser(userWallet);
+            if (user) {
+                res.json(
+                    StatusFlow({
+                        code: StatusFlowCodes.OK,
+                        lang: "es",
+                        extra: user,
+                    })
+                );
+            } else {
+                res.status(404).json(
+                    StatusFlow({
+                        code: StatusFlowCodes.NOT_FOUND,
+                        lang: "es",
+                        extra: { error: "User not found" },
+                    })
+                );
+            }
+        } catch (error) {
+            res.status(500).json(
+                StatusFlow({
+                    code: StatusFlowCodes.INTERNAL_SERVER_ERROR,
+                    lang: "es",
+                    extra: {
+                        error:
+                            error instanceof Error
+                                ? error.message
+                                : "Unknown error",
+                    },
+                })
+            );
+        }
+    }
+);
+
+// [swagger documentation removed]
+router.get(
+    "/users/:userWallet/rewards",
+    validateWalletParam,
+    async (req: Request, res: Response) => {
+        try {
+            const { userWallet } = req.params;
+            const pendingRewards =
+                await prowalletService.getPendingRewards(userWallet);
+            res.json(
+                StatusFlow({
+                    code: StatusFlowCodes.OK,
+                    lang: "es",
+                    extra: {
+                        userWallet,
+                        pendingRewards,
+                    },
+                })
+            );
+        } catch (error) {
+            res.status(500).json(
+                StatusFlow({
+                    code: StatusFlowCodes.INTERNAL_SERVER_ERROR,
+                    lang: "es",
+                    extra: {
+                        error:
+                            error instanceof Error
+                                ? error.message
+                                : "Unknown error",
+                    },
+                })
+            );
+        }
+    }
+);
+
+// [swagger documentation removed]
+router.post(
+    "/users/:userWallet/claim",
+    strictRateLimitMiddleware,
+    validateWalletParam,
+    async (req: Request, res: Response) => {
+        try {
+            const { userWallet } = req.params;
+            const result = await prowalletService.claimRewards(userWallet);
+            const statusCode = result.success
+                ? StatusFlowCodes.OK
+                : StatusFlowCodes.BAD_REQUEST;
+            res.status(statusCode === StatusFlowCodes.OK ? 200 : 400).json(
+                StatusFlow({
+                    code: statusCode,
+                    lang: "es",
+                    extra: result,
+                })
+            );
+        } catch (error) {
+            res.status(500).json(
+                StatusFlow({
+                    code: StatusFlowCodes.INTERNAL_SERVER_ERROR,
+                    lang: "es",
+                    extra: {
+                        error:
+                            error instanceof Error
+                                ? error.message
+                                : "Unknown error",
+                    },
+                })
+            );
+        }
+    }
+);
+
+// [swagger documentation removed]
+router.post(
+    "/users/:userWallet/shares",
+    strictRateLimitMiddleware,
+    validateSolanaAddress("authority"),
+    body("newShares")
+        .isInt({ min: 0 })
+        .withMessage("New shares must be a non-negative integer"),
+    param("userWallet").custom((value) => {
+        if (!solanaService.isValidAddress(value)) {
+            throw new Error("userWallet must be a valid Solana address");
+        }
+        return true;
+    }),
+    handleValidationErrors,
+    async (req: Request, res: Response) => {
+        try {
+            const { userWallet } = req.params;
+            const { newShares, authority } = req.body;
+            const result = await prowalletService.updateUserShares(
+                userWallet,
+                newShares,
+                authority
+            );
+            const statusCode = result.success
+                ? StatusFlowCodes.OK
+                : StatusFlowCodes.BAD_REQUEST;
+            res.status(statusCode === StatusFlowCodes.OK ? 200 : 400).json(
+                StatusFlow({
+                    code: statusCode,
+                    lang: "es",
+                    extra: result,
+                })
+            );
+        } catch (error) {
+            res.status(500).json(
+                StatusFlow({
+                    code: StatusFlowCodes.INTERNAL_SERVER_ERROR,
+                    lang: "es",
+                    extra: {
+                        error:
+                            error instanceof Error
+                                ? error.message
+                                : "Unknown error",
+                    },
+                })
+            );
+        }
+    }
+);
+
+// [swagger documentation removed]
+router.post(
+    "/revenue/deposit",
+    strictRateLimitMiddleware,
+    [
+        validateSolanaAddress("authority"),
+        body("amount")
+            .isFloat({ min: 0.000001 })
+            .withMessage("Amount must be greater than 0"),
+        body("tokenMint")
+            .optional()
+            .custom((value) => {
+                if (value && !solanaService.isValidAddress(value)) {
+                    throw new Error(
+                        "Token mint must be a valid Solana address"
+                    );
+                }
+                return true;
+            }),
+        handleValidationErrors,
+    ],
+    async (req: Request, res: Response) => {
+        try {
+            const { amount, tokenMint, authority } = req.body;
+            const result = await prowalletService.depositRevenue({
+                amount,
+                tokenMint,
+                authority,
+            });
+            const statusCode = result.success
+                ? StatusFlowCodes.OK
+                : StatusFlowCodes.BAD_REQUEST;
+            res.status(statusCode === StatusFlowCodes.OK ? 200 : 400).json(
+                StatusFlow({
+                    code: statusCode,
+                    lang: "es",
+                    extra: result,
+                })
+            );
+        } catch (error) {
+            res.status(500).json(
+                StatusFlow({
+                    code: StatusFlowCodes.INTERNAL_SERVER_ERROR,
+                    lang: "es",
+                    extra: {
+                        error:
+                            error instanceof Error
+                                ? error.message
+                                : "Unknown error",
+                    },
+                })
+            );
+        }
+    }
+);
+
+// Get contract state
+router.get("/state", async (req: Request, res: Response) => {
+    try {
+        const state = await prowalletService.getState();
+
+        if (state) {
+            res.json(
+                StatusFlow({
+                    code: StatusFlowCodes.OK,
+                    lang: "es",
+                    extra: state,
+                })
+            );
+        } else {
+            res.status(404).json(
+                StatusFlow({
+                    code: StatusFlowCodes.NOT_FOUND,
+                    lang: "es",
+                    extra: { error: "Contract state not found" },
+                })
+            );
+        }
+    } catch (error) {
+        res.status(500).json(
+            StatusFlow({
+                code: StatusFlowCodes.INTERNAL_SERVER_ERROR,
+                lang: "es",
+                extra: {
+                    error:
+                        error instanceof Error
+                            ? error.message
+                            : "Unknown error",
+                },
+            })
+        );
+    }
+});
+
+// [swagger documentation removed]
+router.get("/multisig", async (req: Request, res: Response) => {
+    try {
+        const multisig = await prowalletService.getMultisig();
+        if (multisig) {
+            res.json(
+                StatusFlow({
+                    code: StatusFlowCodes.OK,
+                    lang: "es",
+                    extra: multisig,
+                })
+            );
+        } else {
+            res.status(404).json(
+                StatusFlow({
+                    code: StatusFlowCodes.NOT_FOUND,
+                    lang: "es",
+                    extra: { error: "Multisig configuration not found" },
+                })
+            );
+        }
+    } catch (error) {
+        res.status(500).json(
+            StatusFlow({
+                code: StatusFlowCodes.INTERNAL_SERVER_ERROR,
+                lang: "es",
+                extra: {
+                    error:
+                        error instanceof Error
+                            ? error.message
+                            : "Unknown error",
+                },
+            })
+        );
+    }
+});
+
+// [swagger documentation removed]
+router.post(
+    "/multisig/proposals",
+    strictRateLimitMiddleware,
+    [
+        validateSolanaAddress("authority"),
+        body("proposalType")
+            .isString()
+            .notEmpty()
+            .withMessage("Proposal type is required"),
+        body("data").exists().withMessage("Proposal data is required"),
+        handleValidationErrors,
+    ],
+    async (req: Request, res: Response) => {
+        try {
+            const { proposalType, data, authority } = req.body;
+            const result = await prowalletService.createProposal(
+                proposalType,
+                data,
+                authority
+            );
+            const statusCode = result.success
+                ? StatusFlowCodes.OK
+                : StatusFlowCodes.BAD_REQUEST;
+            res.status(statusCode === StatusFlowCodes.OK ? 200 : 400).json(
+                StatusFlow({
+                    code: statusCode,
+                    lang: "es",
+                    extra: result,
+                })
+            );
+        } catch (error) {
+            res.status(500).json(
+                StatusFlow({
+                    code: StatusFlowCodes.INTERNAL_SERVER_ERROR,
+                    lang: "es",
+                    extra: {
+                        error:
+                            error instanceof Error
+                                ? error.message
+                                : "Unknown error",
+                    },
+                })
+            );
+        }
+    }
+);
+
+// [swagger documentation removed]
+router.post(
+    "/multisig/proposals/:proposalId/execute",
+    strictRateLimitMiddleware,
+    [
+        param("proposalId")
+            .isInt({ min: 1 })
+            .withMessage("Proposal ID must be a positive integer"),
+        validateSolanaAddress("authority"),
+        handleValidationErrors,
+    ],
+    async (req: Request, res: Response) => {
+        try {
+            const { proposalId } = req.params;
+            const { authority } = req.body;
+            const result = await prowalletService.executeProposal(
+                parseInt(proposalId),
+                authority
+            );
+            const statusCode = result.success
+                ? StatusFlowCodes.OK
+                : StatusFlowCodes.BAD_REQUEST;
+            res.status(statusCode === StatusFlowCodes.OK ? 200 : 400).json(
+                StatusFlow({
+                    code: statusCode,
+                    lang: "es",
+                    extra: result,
+                })
+            );
+        } catch (error) {
+            res.status(500).json(
+                StatusFlow({
+                    code: StatusFlowCodes.INTERNAL_SERVER_ERROR,
+                    lang: "es",
+                    extra: {
+                        error:
+                            error instanceof Error
+                                ? error.message
+                                : "Unknown error",
+                    },
+                })
+            );
+        }
+    }
+);
+
+// Emergency stop
+router.post(
+    "/emergency-stop",
+    strictRateLimitMiddleware,
+    [validateSolanaAddress("authority"), handleValidationErrors],
+    async (req: Request, res: Response) => {
+        try {
+            const { authority } = req.body;
+
+            const result = await prowalletService.emergencyStop(authority);
+
+            const statusCode = result.success
+                ? StatusFlowCodes.OK
+                : StatusFlowCodes.BAD_REQUEST;
+            res.status(statusCode === StatusFlowCodes.OK ? 200 : 400).json(
+                StatusFlow({
+                    code: statusCode,
+                    lang: "es",
+                    extra: result,
+                })
+            );
+        } catch (error) {
+            res.status(500).json(
+                StatusFlow({
+                    code: StatusFlowCodes.INTERNAL_SERVER_ERROR,
+                    lang: "es",
+                    extra: {
+                        error:
+                            error instanceof Error
+                                ? error.message
+                                : "Unknown error",
+                    },
+                })
+            );
+        }
+    }
+);
+
+// Set pause state
+router.post(
+    "/pause",
+    strictRateLimitMiddleware,
+    [
+        validateSolanaAddress("authority"),
+        body("isPaused").isBoolean().withMessage("isPaused must be a boolean"),
+        handleValidationErrors,
+    ],
+    async (req: Request, res: Response) => {
+        try {
+            const { isPaused, authority } = req.body;
+
+            const result = await prowalletService.setPause(isPaused, authority);
+
+            const statusCode = result.success
+                ? StatusFlowCodes.OK
+                : StatusFlowCodes.BAD_REQUEST;
+            res.status(statusCode === StatusFlowCodes.OK ? 200 : 400).json(
+                StatusFlow({
+                    code: statusCode,
+                    lang: "es",
+                    extra: result,
+                })
+            );
+        } catch (error) {
+            res.status(500).json(
+                StatusFlow({
+                    code: StatusFlowCodes.INTERNAL_SERVER_ERROR,
+                    lang: "es",
+                    extra: {
+                        error:
+                            error instanceof Error
+                                ? error.message
+                                : "Unknown error",
+                    },
+                })
+            );
+        }
+    }
+);
+
+export default router;

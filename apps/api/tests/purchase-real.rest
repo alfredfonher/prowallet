@@ -1,0 +1,19 @@
+### Iniciar compra real de ProWallet en Solana Devnet
+POST https://servicioshilda.orioncaribe.com/api/v1/purchase/initiate
+Content-Type: application/json
+
+{
+  "walletAddress": "3deLF3EPKKSGFJPyESx7igyeXZgXjWe1z5JoE5ZqG2Uw",
+  "tokenAmount": 100,
+  "paymentMethod": "SOL",
+  "maxSlippage": 5
+}
+
+### Confirmar compra (firma)
+POST https://servicioshilda.orioncaribe.com/api/v1/purchase/confirm/b1047fc0-b92b-4848-9a3e-8c26180e3e62
+Content-Type: application/json
+
+{
+  "signature": "<FIRMA_SOLANA>",
+  "blockSlot": <NUMERO_SLOT>
+}

@@ -1,0 +1,416 @@
+### ============================================================================
+### ADVANCED TEST SCENARIOS
+### ============================================================================
+### Casos de uso complejos y flujos completos
+
+@api = https://servicioshilda.orioncaribe.com/api/v1
+
+### ============================================================================
+### SCENARIO 1: COMPLETE USER REGISTRATION & LOGIN FLOW
+### ============================================================================
+### Simula el flujo completo de un nuevo usuario
+
+### Step 1: Check API health before starting
+GET {{@api}}/health
+
+###
+
+### Step 2: Register new user
+POST {{@api}}/auth/register
+Content-Type: application/json
+
+{
+  "username": "newuser_{{$timestamp}}",
+  "password": "SecurePassword123!",
+  "email": "user_{{$timestamp}}@example.com"
+}
+
+### Save accessToken from response:
+### @accessToken = <response: body $.accessToken>
+
+###
+
+### Step 3: Verify user is authenticated
+GET {{@api}}/auth/me
+Authorization: Bearer {{@accessToken}}
+
+###
+
+### ============================================================================
+### SCENARIO 2: WALLET LOGIN WITH SIGNATURE
+### ============================================================================
+### Proceso de login con firma de Solana Wallet
+
+### Step 1: Get challenge for wallet
+GET {{@api}}/auth/challenge/4Nd1m1Q5WJGj5CqPKYrZL2g4X2Y8Z3A4B5C6D7E8
+
+### Response includes: challenge (string to sign), nonce
+
+###
+
+### Step 2: Sign challenge with Solana Wallet (offline process)
+### This would be done in the frontend with Phantom/Solflare
+### Simulating with a pre-signed message:
+
+POST {{@api}}/auth/login-wallet
+Content-Type: application/json
+
+{
+  "publicKey": "4Nd1m1Q5WJGj5CqPKYrZL2g4X2Y8Z3A4B5C6D7E8",
+  "message": "login-nonce-123456789",
+  "signature": "5K1fvW2xY3zZ4aA5bB6cC7dD8eE9fF0gG1hH2iI3jJ4kK5lL6mM7nN8oO9pP0qQ1rR2sS3tT4uU5vV6wW7xX8yY9zZ"
+}
+
+###
+
+### ============================================================================
+### SCENARIO 3: COMPLETE PURCHASE FLOW
+### ============================================================================
+### Flujo completo de compra de tokens
+
+### Step 1: Check current token price
+GET {{@api}}/purchase/price
+
+###
+
+### Step 2: Initiate purchase (requires authentication)
+POST {{@api}}/purchase/initiate
+Content-Type: application/json
+Authorization: Bearer {{@accessToken}}
+
+{
+  "walletAddress": "4Nd1m1Q5WJGj5CqPKYrZL2g4X2Y8Z3A4B5C6D7E8",
+  "paymentMethodId": "solana",
+  "solAmount": 0.5,
+  "slippageTolerance": 0.05
+}
+
+### Response includes: transactionId, transactionBase64
+### Save: @transactionId = <response: body $.transactionId>
+
+###
+
+### Step 3: Sign transaction with wallet (offline in frontend)
+### Then confirm the purchase:
+
+POST {{@api}}/purchase/confirm/{{@transactionId}}
+Content-Type: application/json
+
+{
+  "walletAddress": "4Nd1m1Q5WJGj5CqPKYrZL2g4X2Y8Z3A4B5C6D7E8",
+  "transactionHash": "5K1fvW2xY3zZ4aA5bB6cC7dD8eE9fF0gG1hH2iI3jJ4kK5lL6mM7nN8oO9pP0qQ1rR2sS3tT4uU5vV6wW7xX8yY9zZ",
+  "signature": "5K1fvW2xY3zZ4aA5bB6cC7dD8eE9fF0gG1hH2iI3jJ4kK5lL6mM7nN8oO9pP0qQ1rR2sS3tT4uU5vV6wW7xX8yY9zZ"
+}
+
+###
+
+### Step 4: Monitor purchase status
+GET {{@api}}/purchase/status/{{@transactionId}}
+
+###
+
+### Step 5: Verify tokens received
+GET {{@api}}/prowallet/holder/4Nd1m1Q5WJGj5CqPKYrZL2g4X2Y8Z3A4B5C6D7E8
+
+###
+
+### ============================================================================
+### SCENARIO 4: TOKEN TRANSFER FLOW
+### ============================================================================
+### Transferencia de tokens entre wallets
+
+### Step 1: Initiate transfer
+POST {{@api}}/transfer/initiate
+Content-Type: application/json
+Authorization: Bearer {{@accessToken}}
+
+{
+  "fromWallet": "4Nd1m1Q5WJGj5CqPKYrZL2g4X2Y8Z3A4B5C6D7E8",
+  "toWallet": "ABC123DEF456GHI789JKL012MNO345PQR678STU9",
+  "amount": 100
+}
+
+### Save: @transferId = <response: body $.transactionId>
+
+###
+
+### Step 2: Sign and confirm transfer
+POST {{@api}}/transfer/confirm/{{@transferId}}
+Content-Type: application/json
+
+{
+  "fromWallet": "4Nd1m1Q5WJGj5CqPKYrZL2g4X2Y8Z3A4B5C6D7E8",
+  "signature": "5K1fvW2xY3zZ4aA5bB6cC7dD8eE9fF0gG1hH2iI3jJ4kK5lL6mM7nN8oO9pP0qQ1rR2sS3tT4uU5vV6wW7xX8yY9zZ",
+  "transactionHash": "5K1fvW2xY3zZ4aA5bB6cC7dD8eE9fF0gG1hH2iI3jJ4kK5lL6mM7nN8oO9pP0qQ1rR2sS3tT4uU5vV6wW7xX8yY9zZ"
+}
+
+###
+
+### Step 3: Verify balances updated
+GET {{@api}}/prowallet/holder/4Nd1m1Q5WJGj5CqPKYrZL2g4X2Y8Z3A4B5C6D7E8
+
+###
+
+### ============================================================================
+### SCENARIO 5: TOKEN WITHDRAWAL FLOW
+### ============================================================================
+### Retiro de tokens on-chain
+
+### Step 1: Request withdrawal
+POST {{@api}}/exchange/withdraw
+Content-Type: application/json
+Authorization: Bearer {{@accessToken}}
+
+{
+  "amount": 500,
+  "to": "ABC123DEF456GHI789JKL012MNO345PQR678STU9"
+}
+
+### Save: @withdrawalId = <response: body $.withdrawalId>
+
+###
+
+### Step 2: Monitor withdrawal status
+GET {{@api}}/exchange/withdraw/status/{{@withdrawalId}}
+Authorization: Bearer {{@accessToken}}
+
+###
+
+### Step 3: Verify transaction on-chain
+POST {{@api}}/solana/rpc
+Content-Type: application/json
+
+{
+  "jsonrpc": "2.0",
+  "id": 1,
+  "method": "getTokenAccountBalance",
+  "params": ["ABC123DEF456GHI789JKL012MNO345PQR678STU9"]
+}
+
+###
+
+### ============================================================================
+### SCENARIO 6: PRICE & EXCHANGE DATA FLOW
+### ============================================================================
+### Obtener información de precios y mercado
+
+### Step 1: Get cached SOL price
+GET {{@api}}/exchange/solPriceCached
+
+###
+
+### Step 2: Get token info
+GET {{@api}}/exchange/token-info?mint=D8TwbwGGmyucrxPB9uscait27caVgeqYHPpyN3XXjUX3
+
+###
+
+### Step 3: Get market statistics
+GET {{@api}}/purchase/market-stats
+
+###
+
+### Step 4: Get payment methods
+GET {{@api}}/purchase/payment-methods
+
+###
+
+### Step 5: Get exchange rates
+GET {{@api}}/exchange/rates?from=SOL&to=USD
+
+###
+
+### ============================================================================
+### SCENARIO 7: CONTRACT STATISTICS & ANALYTICS
+### ============================================================================
+### Análisis completo del contrato
+
+### Step 1: Get contract info
+GET {{@api}}/prowallet/contract-info
+
+###
+
+### Step 2: Get overall statistics
+GET {{@api}}/prowallet/stats
+
+###
+
+### Step 3: Get list of top holders
+GET {{@api}}/prowallet/holders?limit=50&offset=0
+
+###
+
+### Step 4: Get recent transfers
+GET {{@api}}/prowallet/transfers?limit=50
+
+###
+
+### Step 5: Check specific wallet
+GET {{@api}}/prowallet/holder/4Nd1m1Q5WJGj5CqPKYrZL2g4X2Y8Z3A4B5C6D7E8
+
+###
+
+### Step 6: Check if wallet is whitelisted
+GET {{@api}}/prowallet/whitelist/4Nd1m1Q5WJGj5CqPKYrZL2g4X2Y8Z3A4B5C6D7E8
+
+###
+
+### ============================================================================
+### SCENARIO 8: USER NOTIFICATIONS WORKFLOW
+### ============================================================================
+### Gestión de notificaciones del usuario
+
+### Step 1: Get all notifications
+GET {{@api}}/notifications?limit=20&offset=0
+Authorization: Bearer {{@accessToken}}
+
+###
+
+### Step 2: Get unread count
+GET {{@api}}/notifications/unread
+Authorization: Bearer {{@accessToken}}
+
+###
+
+### Step 3: Mark specific notification as read
+POST {{@api}}/notifications/notif_12345/read
+Authorization: Bearer {{@accessToken}}
+Content-Type: application/json
+
+{}
+
+###
+
+### Step 4: Mark all as read
+POST {{@api}}/notifications/read-all
+Authorization: Bearer {{@accessToken}}
+Content-Type: application/json
+
+{}
+
+###
+
+### Step 5: Set notification preferences
+POST {{@api}}/notifications/subscribe
+Authorization: Bearer {{@accessToken}}
+Content-Type: application/json
+
+{
+  "types": ["transaction", "purchase", "withdrawal"],
+  "email": true,
+  "push": true,
+  "inApp": true
+}
+
+###
+
+### ============================================================================
+### SCENARIO 9: ERROR HANDLING & EDGE CASES
+### ============================================================================
+### Pruebas de casos límite y manejo de errores
+
+### Test 1: Invalid wallet address
+GET {{@api}}/prowallet/whitelist/invalid_wallet_address
+
+###
+
+### Test 2: Non-existent transaction
+GET {{@api}}/purchase/status/nonexistent_tx_12345
+
+###
+
+### Test 3: Insufficient balance withdrawal
+POST {{@api}}/exchange/withdraw
+Content-Type: application/json
+Authorization: Bearer {{@accessToken}}
+
+{
+  "amount": 999999999,
+  "to": "ABC123DEF456GHI789JKL012MNO345PQR678STU9"
+}
+
+###
+
+### Test 4: Invalid token
+GET {{@api}}/auth/me
+Authorization: Bearer invalid.token.here
+
+###
+
+### Test 5: Missing required fields
+POST {{@api}}/purchase/initiate
+Content-Type: application/json
+Authorization: Bearer {{@accessToken}}
+
+{
+  "walletAddress": "4Nd1m1Q5WJGj5CqPKYrZL2g4X2Y8Z3A4B5C6D7E8"
+}
+
+###
+
+### ============================================================================
+### SCENARIO 10: PERFORMANCE & LOAD TESTING
+### ============================================================================
+### Pruebas de rendimiento y carga
+
+### Rapid health checks (test rate limiting)
+### Ejecutar múltiples veces en rápida sucesión
+
+GET {{@api}}/health
+
+###
+
+GET {{@api}}/health
+
+###
+
+GET {{@api}}/health
+
+###
+
+GET {{@api}}/health
+
+###
+
+GET {{@api}}/health
+
+### Rapid price queries
+GET {{@api}}/exchange/solPriceCached
+
+###
+
+GET {{@api}}/exchange/solPriceCached
+
+###
+
+GET {{@api}}/exchange/solPriceCached
+
+###
+
+### Many concurrent holders queries
+GET {{@api}}/prowallet/holders?limit=100
+
+###
+
+### ============================================================================
+### NOTES
+### ============================================================================
+### 
+### 1. REEMPLAZAR VALORES DE PRUEBA
+###    - Reemplaza @testWallet con una dirección real
+###    - Reemplaza @accessToken con un token válido
+###    - Reemplaza @transactionId con IDs reales
+###
+### 2. ORDENES DE EJECUCIÓN
+###    Los scenarios están diseñados para ejecutarse en orden
+###    Algunos usan datos de pasos anteriores
+###
+### 3. WALLETS REALES REQUERIDAS
+###    Para transferencias y retiros se necesitan wallets reales
+###    en el Dockerfile
+###
+### 4. TIMESTAMPS DINÁMICOS
+###    {{$timestamp}} se reemplaza automáticamente
+###
+### 5. RESPUESTAS EN VARIABLES
+###    Usa <response: body $.field> para guardar datos
+###

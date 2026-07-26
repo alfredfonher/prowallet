@@ -1,0 +1,843 @@
+import { PublicKey, Transaction } from "@solana/web3.js";
+import { solanaService } from "./solana.service";
+import { getAssociatedTokenAddress } from "@solana/spl-token";
+import { PROWALLET_CONFIG } from "../config";
+import { ProWalletAnchorService } from "./solana/prowallet-anchor.service";
+
+// Tipos para el contrato inteligente ProWallet
+export interface State {
+    totalShares: number;
+    accRewardPerShare: string;
+    vaultBump: number;
+    isPaused: boolean;
+    emergencyMode: boolean;
+    lastUpdateSlot: number;
+}
+
+export interface User {
+    owner: string;
+    shares: number;
+    rewardDebt: number;
+    lastClaimSlot: number;
+}
+
+export interface Multisig {
+    requiredSignatures: number;
+    signers: string[];
+    proposalCount: number;
+}
+
+export interface Proposal {
+    id: number;
+    proposedAt: number;
+    executedAt?: number;
+    signers: string[];
+    executed: boolean;
+    proposalType: string;
+    data: any;
+}
+
+export interface WhitelistEntry {
+    wallet: string;
+    addedAt?: number;
+    merkleProof?: string[];
+}
+
+export interface ContractInfo {
+    programId: string;
+    authority: string;
+    whitelistCount: number;
+    network: string;
+    state?: State;
+    multisig?: Multisig;
+}
+
+export interface TransferRequest {
+    fromWallet: string;
+    toWallet: string;
+    amount: number;
+    tokenMint?: string;
+}
+
+export interface DepositRevenueRequest {
+    amount: number;
+    tokenMint?: string;
+    authority: string;
+}
+
+export interface RegisterUserRequest {
+    userWallet: string;
+    shares: number;
+    merkleProof: string[];
+    authority: string;
+}
+
+export interface TransferResult {
+    success: boolean;
+    signature?: string;
+    error?: string;
+    transactionHash?: string;
+    transaction?: string; // Transacción serializada en base64
+}
+
+export class ProWalletService {
+    private programId: PublicKey;
+
+    constructor() {
+        this.programId = solanaService.getProgramId();
+    }
+
+    // Get contract information
+    async getContractInfo(): Promise<ContractInfo> {
+        const networkInfo = solanaService.getNetworkInfo();
+        const accounts = await solanaService.getProgramAccounts();
+
+        return {
+            programId: this.programId.toString(),
+            authority: "N/A",
+            whitelistCount: accounts.length,
+            network: networkInfo.network,
+        };
+    }
+                whitelistCount: 0, // This would need to be calculated from actual data
+                network: networkInfo.network,
+            };
+        } catch (error) {
+            console.error("Error getting contract info:", error);
+            throw new Error("Failed to get contract information");
+        }
+    }
+
+    // Get current whitelist (mock implementation)
+    async getWhitelist(): Promise<WhitelistEntry[]> {
+        try {
+            // In a real implementation, this would fetch from the smart contract state
+            // For now, we'll return an example structure
+
+            const accounts = await solanaService.getProgramAccounts();
+
+            // Mock whitelist for demo purposes
+            const mockWhitelist: WhitelistEntry[] = [
+                {
+                    wallet: "GmYsHTNVhnJwpV5yiHa8NwLqnMpan3Qy8LsqA7L9yzH1",
+                    addedAt: Date.now() - 86400000, // 1 day ago
+                },
+            ];
+
+            return mockWhitelist;
+        } catch (error) {
+            console.error("Error getting whitelist:", error);
+            throw new Error("Failed to get whitelist");
+        }
+    }
+
+    // Check if wallet is whitelisted
+    async isWhitelisted(wallet: string): Promise<boolean> {
+        try {
+            if (!solanaService.isValidAddress(wallet)) {
+                return false;
+            }
+
+            const whitelist = await this.getWhitelist();
+            return whitelist.some((entry) => entry.wallet === wallet);
+        } catch (error) {
+            console.error("Error checking whitelist status:", error);
+            return false;
+        }
+    }
+
+    // Add wallet to whitelist (mock implementation)
+    async addToWhitelist(
+        wallet: string,
+        authority: string
+    ): Promise<{ success: boolean; signature?: string; error?: string }> {
+        try {
+            // Validate addresses
+            if (!solanaService.isValidAddress(wallet)) {
+                return { success: false, error: "Invalid wallet address" };
+            }
+
+            if (!solanaService.isValidAddress(authority)) {
+                return { success: false, error: "Invalid authority address" };
+            }
+
+            // Check if already whitelisted
+            const isAlreadyWhitelisted = await this.isWhitelisted(wallet);
+            if (isAlreadyWhitelisted) {
+                return {
+                    success: false,
+                    error: "Wallet is already whitelisted",
+                };
+            }
+
+            // In a real implementation, this would:
+            // 1. Create the transaction to call add_to_whitelist
+            // 2. Sign and send the transaction
+            // 3. Return the transaction signature
+
+            // Mock successful response
+            const mockSignature = "mock_signature_" + Date.now();
+
+            console.log(`Added ${wallet} to whitelist by ${authority}`);
+
+            return {
+                success: true,
+                signature: mockSignature,
+            };
+        } catch (error) {
+            console.error("Error adding to whitelist:", error);
+            return {
+                success: false,
+                error: error instanceof Error ? error.message : "Unknown error",
+            };
+        }
+    }
+
+    // Remove wallet from whitelist (mock implementation)
+    async removeFromWhitelist(
+        wallet: string,
+        authority: string
+    ): Promise<{ success: boolean; signature?: string; error?: string }> {
+        try {
+            // Validate addresses
+            if (!solanaService.isValidAddress(wallet)) {
+                return { success: false, error: "Invalid wallet address" };
+            }
+
+            if (!solanaService.isValidAddress(authority)) {
+                return { success: false, error: "Invalid authority address" };
+            }
+
+            // Check if actually whitelisted
+            const isCurrentlyWhitelisted = await this.isWhitelisted(wallet);
+            if (!isCurrentlyWhitelisted) {
+                return { success: false, error: "Wallet is not whitelisted" };
+            }
+
+            // Mock successful response
+            const mockSignature = "mock_signature_" + Date.now();
+
+            console.log(`Removed ${wallet} from whitelist by ${authority}`);
+
+            return {
+                success: true,
+                signature: mockSignature,
+            };
+        } catch (error) {
+            console.error("Error removing from whitelist:", error);
+            return {
+                success: false,
+                error: error instanceof Error ? error.message : "Unknown error",
+            };
+        }
+    }
+
+    // Execute restricted transfer using smart contract
+    async executeRestrictedTransfer(
+        transfer: TransferRequest
+    ): Promise<TransferResult> {
+        try {
+            // Validate all addresses
+            if (!solanaService.isValidAddress(transfer.fromWallet)) {
+                return { success: false, error: "Invalid from wallet address" };
+            }
+
+            if (!solanaService.isValidAddress(transfer.toWallet)) {
+                return { success: false, error: "Invalid to wallet address" };
+            }
+
+            // Validate token mint
+            if (!PROWALLET_CONFIG.token_mint) {
+                return { success: false, error: "Token mint not configured" };
+            }
+
+            // Validate amount
+            if (transfer.amount <= 0) {
+                return {
+                    success: false,
+                    error: "Amount must be greater than 0",
+                };
+            }
+
+            // Check if both wallets are whitelisted
+            const fromWhitelisted = await this.isWhitelisted(
+                transfer.fromWallet
+            );
+            const toWhitelisted = await this.isWhitelisted(transfer.toWallet);
+
+            if (!fromWhitelisted) {
+                return {
+                    success: false,
+                    error: "From wallet is not whitelisted",
+                };
+            }
+
+            if (!toWhitelisted) {
+                return {
+                    success: false,
+                    error: "To wallet is not whitelisted",
+                };
+            }
+
+            // Get token balance to check if sufficient funds
+            const balance = await solanaService.getTokenBalance(
+                transfer.fromWallet,
+                PROWALLET_CONFIG.token_mint
+            );
+            if (balance.uiAmount < transfer.amount) {
+                return {
+                    success: false,
+                    error: "Insufficient token balance",
+                };
+            }
+
+            // Build and send the transaction using the smart contract
+            const connection = solanaService.getConnection();
+            const { blockhash } = await connection.getLatestBlockhash();
+
+            // Create the transfer instruction using the Anchor program
+            const fromPubkey = new PublicKey(transfer.fromWallet);
+            const toPubkey = new PublicKey(transfer.toWallet);
+            const mintPubkey = new PublicKey(PROWALLET_CONFIG.token_mint);
+
+            // Get associated token accounts for both wallets
+            const fromATA = await getAssociatedTokenAddress(
+                mintPubkey,
+                fromPubkey
+            );
+            const toATA = await getAssociatedTokenAddress(mintPubkey, toPubkey);
+
+            // Create the program instruction
+            const anchorService = new ProWalletAnchorService(
+                connection,
+                PROWALLET_CONFIG.program_id || ""
+            );
+
+            const transferInstruction =
+                await anchorService.buildTransferInstruction(
+                    fromPubkey.toString(),
+                    toPubkey.toString(),
+                    fromATA.toString(),
+                    toATA.toString(),
+                    Math.round(
+                        transfer.amount *
+                            Math.pow(10, PROWALLET_CONFIG.decimals || 9)
+                    )
+                );
+
+            // Crear la transacción
+            const transaction = new Transaction({
+                recentBlockhash: blockhash,
+                feePayer: fromPubkey,
+            });
+
+            // Agregar la instrucción de transferencia
+            transaction.add(transferInstruction);
+
+            // Serializar la transacción para que el cliente la firme
+            const serializedTransaction = transaction
+                .serialize({
+                    requireAllSignatures: false,
+                    verifySignatures: false,
+                })
+                .toString("base64");
+
+            return {
+                success: true,
+                transaction: serializedTransaction,
+            };
+        } catch (error) {
+            console.error("Error executing restricted transfer:", error);
+            return {
+                success: false,
+                error:
+                    error instanceof Error
+                        ? error.message
+                        : "Unknown error executing transfer",
+            };
+        }
+    }
+
+    // Get wallet balance for a specific token
+    async getWalletBalance(wallet: string, tokenMint?: string) {
+        try {
+            if (!solanaService.isValidAddress(wallet)) {
+                throw new Error("Invalid wallet address");
+            }
+
+            // Get SOL balance
+            const solBalance = await solanaService.getSolBalance(wallet);
+
+            let tokenBalance = null;
+            if (tokenMint && solanaService.isValidAddress(tokenMint)) {
+                tokenBalance = await solanaService.getTokenBalance(
+                    wallet,
+                    tokenMint
+                );
+            }
+
+            return {
+                wallet,
+                sol: solBalance,
+                token: tokenBalance,
+                isWhitelisted: await this.isWhitelisted(wallet),
+            };
+        } catch (error) {
+            console.error("Error getting wallet balance:", error);
+            throw new Error(`Failed to get balance for wallet ${wallet}`);
+        }
+    }
+
+    // Get transaction history for a wallet
+    async getWalletTransactions(wallet: string, limit: number = 10) {
+        try {
+            if (!solanaService.isValidAddress(wallet)) {
+                throw new Error("Invalid wallet address");
+            }
+
+            const transactions = await solanaService.getRecentTransactions(
+                wallet,
+                limit
+            );
+
+            return {
+                wallet,
+                transactions: transactions.map((tx) => ({
+                    signature: tx.signature,
+                    slot: tx.slot,
+                    blockTime: tx.blockTime,
+                    status: tx.err ? "failed" : "success",
+                    error: tx.err,
+                })),
+            };
+        } catch (error) {
+            console.error("Error getting wallet transactions:", error);
+            throw new Error(`Failed to get transactions for wallet ${wallet}`);
+        }
+    }
+
+    // Initialize contract (admin only)
+    async initialize(
+        authority: string
+    ): Promise<{ success: boolean; signature?: string; error?: string }> {
+        try {
+            if (!solanaService.isValidAddress(authority)) {
+                return { success: false, error: "Invalid authority address" };
+            }
+
+            // Mock implementation
+            const mockSignature = "initialize_signature_" + Date.now();
+
+            console.log(`Contract initialized by ${authority}`);
+
+            return {
+                success: true,
+                signature: mockSignature,
+            };
+        } catch (error) {
+            console.error("Error initializing contract:", error);
+            return {
+                success: false,
+                error: error instanceof Error ? error.message : "Unknown error",
+            };
+        }
+    }
+
+    // Register user with merkle proof verification
+    async registerUser(
+        request: RegisterUserRequest
+    ): Promise<{ success: boolean; signature?: string; error?: string }> {
+        try {
+            if (!solanaService.isValidAddress(request.userWallet)) {
+                return { success: false, error: "Invalid user wallet address" };
+            }
+
+            if (!solanaService.isValidAddress(request.authority)) {
+                return { success: false, error: "Invalid authority address" };
+            }
+
+            if (request.shares <= 0) {
+                return {
+                    success: false,
+                    error: "Shares must be greater than 0",
+                };
+            }
+
+            if (
+                !Array.isArray(request.merkleProof) ||
+                request.merkleProof.length === 0
+            ) {
+                return { success: false, error: "Valid merkle proof required" };
+            }
+
+            // Check if user is already registered
+            const existingUser = await this.getUser(request.userWallet);
+            if (existingUser) {
+                return { success: false, error: "User is already registered" };
+            }
+
+            const mockSignature = "register_signature_" + Date.now();
+
+            console.log(
+                `Registered user ${request.userWallet} with ${request.shares} shares`
+            );
+
+            return {
+                success: true,
+                signature: mockSignature,
+            };
+        } catch (error) {
+            console.error("Error registering user:", error);
+            return {
+                success: false,
+                error: error instanceof Error ? error.message : "Unknown error",
+            };
+        }
+    }
+
+    // Deposit revenue to be distributed
+    async depositRevenue(
+        request: DepositRevenueRequest
+    ): Promise<{ success: boolean; signature?: string; error?: string }> {
+        try {
+            if (!solanaService.isValidAddress(request.authority)) {
+                return { success: false, error: "Invalid authority address" };
+            }
+
+            if (request.amount <= 0) {
+                return {
+                    success: false,
+                    error: "Amount must be greater than 0",
+                };
+            }
+
+            const mockSignature = "deposit_signature_" + Date.now();
+
+            console.log(
+                `Deposited ${request.amount} for revenue distribution by ${request.authority}`
+            );
+
+            return {
+                success: true,
+                signature: mockSignature,
+            };
+        } catch (error) {
+            console.error("Error depositing revenue:", error);
+            return {
+                success: false,
+                error: error instanceof Error ? error.message : "Unknown error",
+            };
+        }
+    }
+
+    // Claim rewards for a user
+    async claimRewards(userWallet: string): Promise<{
+        success: boolean;
+        signature?: string;
+        error?: string;
+        amount?: number;
+    }> {
+        try {
+            if (!solanaService.isValidAddress(userWallet)) {
+                return { success: false, error: "Invalid user wallet address" };
+            }
+
+            const user = await this.getUser(userWallet);
+            if (!user) {
+                return { success: false, error: "User not registered" };
+            }
+
+            const pendingRewards = await this.getPendingRewards(userWallet);
+            if (pendingRewards <= 0) {
+                return { success: false, error: "No pending rewards to claim" };
+            }
+
+            const mockSignature = "claim_signature_" + Date.now();
+
+            console.log(`User ${userWallet} claimed ${pendingRewards} rewards`);
+
+            return {
+                success: true,
+                signature: mockSignature,
+                amount: pendingRewards,
+            };
+        } catch (error) {
+            console.error("Error claiming rewards:", error);
+            return {
+                success: false,
+                error: error instanceof Error ? error.message : "Unknown error",
+            };
+        }
+    }
+
+    // Update user shares (admin function)
+    async updateUserShares(
+        userWallet: string,
+        newShares: number,
+        authority: string
+    ): Promise<{ success: boolean; signature?: string; error?: string }> {
+        try {
+            if (!solanaService.isValidAddress(userWallet)) {
+                return { success: false, error: "Invalid user wallet address" };
+            }
+
+            if (!solanaService.isValidAddress(authority)) {
+                return { success: false, error: "Invalid authority address" };
+            }
+
+            if (newShares < 0) {
+                return { success: false, error: "Shares cannot be negative" };
+            }
+
+            const user = await this.getUser(userWallet);
+            if (!user) {
+                return { success: false, error: "User not registered" };
+            }
+
+            const mockSignature = "update_shares_signature_" + Date.now();
+
+            console.log(
+                `Updated user ${userWallet} shares to ${newShares} by ${authority}`
+            );
+
+            return {
+                success: true,
+                signature: mockSignature,
+            };
+        } catch (error) {
+            console.error("Error updating user shares:", error);
+            return {
+                success: false,
+                error: error instanceof Error ? error.message : "Unknown error",
+            };
+        }
+    }
+
+    // Emergency stop (pause contract)
+    async emergencyStop(
+        authority: string
+    ): Promise<{ success: boolean; signature?: string; error?: string }> {
+        try {
+            if (!solanaService.isValidAddress(authority)) {
+                return { success: false, error: "Invalid authority address" };
+            }
+
+            const mockSignature = "emergency_stop_signature_" + Date.now();
+
+            console.log(`Emergency stop activated by ${authority}`);
+
+            return {
+                success: true,
+                signature: mockSignature,
+            };
+        } catch (error) {
+            console.error("Error activating emergency stop:", error);
+            return {
+                success: false,
+                error: error instanceof Error ? error.message : "Unknown error",
+            };
+        }
+    }
+
+    // Set pause state
+    async setPause(
+        isPaused: boolean,
+        authority: string
+    ): Promise<{ success: boolean; signature?: string; error?: string }> {
+        try {
+            if (!solanaService.isValidAddress(authority)) {
+                return { success: false, error: "Invalid authority address" };
+            }
+
+            const mockSignature = "set_pause_signature_" + Date.now();
+
+            console.log(
+                `Contract ${isPaused ? "paused" : "unpaused"} by ${authority}`
+            );
+
+            return {
+                success: true,
+                signature: mockSignature,
+            };
+        } catch (error) {
+            console.error("Error setting pause state:", error);
+            return {
+                success: false,
+                error: error instanceof Error ? error.message : "Unknown error",
+            };
+        }
+    }
+
+    // Get user information
+    async getUser(userWallet: string): Promise<User | null> {
+        try {
+            if (!solanaService.isValidAddress(userWallet)) {
+                return null;
+            }
+
+            // Mock user data - in real implementation, this would fetch from contract state
+            if (userWallet === "GmYsHTNVhnJwpV5yiHa8NwLqnMpan3Qy8LsqA7L9yzH1") {
+                return {
+                    owner: userWallet,
+                    shares: 1000,
+                    rewardDebt: 500,
+                    lastClaimSlot: 12345678,
+                };
+            }
+
+            return null;
+        } catch (error) {
+            console.error("Error getting user:", error);
+            return null;
+        }
+    }
+
+    // Get pending rewards for a user
+    async getPendingRewards(userWallet: string): Promise<number> {
+        try {
+            const user = await this.getUser(userWallet);
+            if (!user) {
+                return 0;
+            }
+
+            // Mock calculation - in real implementation, this would calculate based on contract state
+            // pending_rewards = (user.shares * acc_reward_per_share) / PRECISION - user.reward_debt
+            const mockPendingRewards = Math.max(
+                0,
+                user.shares * 0.001 - user.rewardDebt * 0.001
+            );
+
+            return mockPendingRewards;
+        } catch (error) {
+            console.error("Error getting pending rewards:", error);
+            return 0;
+        }
+    }
+
+    // Get contract state
+    async getState(): Promise<State | null> {
+        try {
+            // Mock state - in real implementation, this would fetch from contract
+            return {
+                totalShares: 10000,
+                accRewardPerShare: "1000000000000000000", // 1e18 scaled
+                vaultBump: 254,
+                isPaused: false,
+                emergencyMode: false,
+                lastUpdateSlot: 12345678,
+            };
+        } catch (error) {
+            console.error("Error getting contract state:", error);
+            return null;
+        }
+    }
+
+    // Get multisig configuration
+    async getMultisig(): Promise<Multisig | null> {
+        try {
+            // Mock multisig - in real implementation, this would fetch from contract
+            return {
+                requiredSignatures: 2,
+                signers: [
+                    "GmYsHTNVhnJwpV5yiHa8NwLqnMpan3Qy8LsqA7L9yzH1",
+                    "HsYsHTNVhnJwpV5yiHa8NwLqnMpan3Qy8LsqA7L9yzH2",
+                ],
+                proposalCount: 5,
+            };
+        } catch (error) {
+            console.error("Error getting multisig:", error);
+            return null;
+        }
+    }
+
+    // Create multisig proposal
+    async createProposal(
+        proposalType: string,
+        data: any,
+        authority: string
+    ): Promise<{
+        success: boolean;
+        signature?: string;
+        proposalId?: number;
+        error?: string;
+    }> {
+        try {
+            if (!solanaService.isValidAddress(authority)) {
+                return { success: false, error: "Invalid authority address" };
+            }
+
+            const multisig = await this.getMultisig();
+            if (!multisig) {
+                return { success: false, error: "Multisig not configured" };
+            }
+
+            if (!multisig.signers.includes(authority)) {
+                return {
+                    success: false,
+                    error: "Authority is not a multisig signer",
+                };
+            }
+
+            const proposalId = multisig.proposalCount + 1;
+            const mockSignature = "proposal_signature_" + Date.now();
+
+            console.log(
+                `Created proposal ${proposalId} of type ${proposalType} by ${authority}`
+            );
+
+            return {
+                success: true,
+                signature: mockSignature,
+                proposalId,
+            };
+        } catch (error) {
+            console.error("Error creating proposal:", error);
+            return {
+                success: false,
+                error: error instanceof Error ? error.message : "Unknown error",
+            };
+        }
+    }
+
+    // Execute multisig proposal
+    async executeProposal(
+        proposalId: number,
+        authority: string
+    ): Promise<{ success: boolean; signature?: string; error?: string }> {
+        try {
+            if (!solanaService.isValidAddress(authority)) {
+                return { success: false, error: "Invalid authority address" };
+            }
+
+            const multisig = await this.getMultisig();
+            if (!multisig) {
+                return { success: false, error: "Multisig not configured" };
+            }
+
+            if (!multisig.signers.includes(authority)) {
+                return {
+                    success: false,
+                    error: "Authority is not a multisig signer",
+                };
+            }
+
+            const mockSignature = "execute_proposal_signature_" + Date.now();
+
+            console.log(`Executed proposal ${proposalId} by ${authority}`);
+
+            return {
+                success: true,
+                signature: mockSignature,
+            };
+        } catch (error) {
+            console.error("Error executing proposal:", error);
+            return {
+                success: false,
+                error: error instanceof Error ? error.message : "Unknown error",
+            };
+        }
+    }
+}
+
+// Export singleton instance
+export const prowalletService = new ProWalletService();

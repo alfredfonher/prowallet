@@ -1,0 +1,87 @@
+### ============================================================================
+### PROWALLET API - TEST VARIABLES & CONFIGURATION
+### ============================================================================
+### Esta es la configuración central de variables para todos los tests REST
+
+@baseUrl = https://servicioshilda.orioncaribe.com/api/v1
+@localhost = http://localhost:3001/api/v1
+@docker = http://localhost:3005/api/v1
+
+### Cambiar entre producción (baseUrl), local directo (localhost) y Docker Compose (docker)
+@api = https://servicioshilda.orioncaribe.com/api/v1
+
+### ============================================================================
+### AUTHENTICATION TOKENS
+### ============================================================================
+### Sustituye estos con tokens reales después de hacer login
+
+@accessToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+@refreshToken = your_refresh_token_here
+
+### ============================================================================
+### SOLANA ADDRESSES & KEYS
+### ============================================================================
+
+@testWallet = 4Nd1m1Q5WJGj5CqPKYrZL2g4X2Y8Z3A4B5C6D7E8
+@testWalletPublicKey = 4Nd1m1Q5WJGj5CqPKYrZL2g4X2Y8Z3A4B5C6D7E8
+@companyWallet = EizJ7W8AbhUAPdSjdEjyKJDEmk7MSJnR6JfH2h2gitLH
+@receiverWallet = ABC123DEF456GHI789JKL012MNO345PQR678STU9
+
+### ============================================================================
+### TOKEN & PRICING
+### ============================================================================
+
+@tokenMint = D8TwbwGGmyucrxPB9uscait27caVgeqYHPpyN3XXjUX3
+@tokenSymbol = GAPC
+@tokenName = ProWallet
+@tokenDecimals = 9
+
+### ============================================================================
+### TRANSACTION DATA
+### ============================================================================
+
+@transactionId = 3xK2mL1nO5pQ8rS9tU0vW1xY2zZ3aA4bB5cC6dD7eE
+@transactionHash = 5K1fvW2xY3zZ4aA5bB6cC7dD8eE9fF0gG1hH2iI3jJ
+@purchaseAmount = 100
+@purchaseAmountSol = 0.1
+
+### ============================================================================
+### PAYMENT & EXCHANGE DATA
+### ============================================================================
+
+@exchangeProvider = coingecko
+@currency = usd
+@solPriceUsd = 150.00
+@commissionRate = 0.02
+
+### ============================================================================
+### API HEALTH CHECK
+### ============================================================================
+
+@healthCheckUrl = {{@api}}/health
+@versionEndpoint = {{@api}}/version
+
+### ============================================================================
+### COMMON HEADERS
+### ============================================================================
+
+@contentType = application/json
+@accept = application/json
+
+### ============================================================================
+### PAGINATION & FILTERING
+### ============================================================================
+
+@pageSize = 20
+@page = 1
+@sortBy = createdAt
+@sortOrder = desc
+
+### ============================================================================
+### RATE LIMITING INFO
+### ============================================================================
+### Límites según Dockerfile:
+### - RATE_LIMIT_WINDOW_MS=900000 (15 minutos)
+### - RATE_LIMIT_MAX_REQUESTS=1000
+### - PURCHASE_RATE_LIMIT_MAX=100
+### - PURCHASE_RATE_LIMIT_WINDOW_MS=900000

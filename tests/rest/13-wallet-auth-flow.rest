@@ -1,0 +1,115 @@
+### ============================================================================
+### WALLET AUTH FLOW - Prueba con tu wallet J3szAxVNUpTYXiW75FpP7XRUtDSaVcaSHf35F6NqeuDD
+### ============================================================================
+
+@api = https://servicioshilda.orioncaribe.com/api/v1
+@myWallet = J3szAxVNUpTYXiW75FpP7XRUtDSaVcaSHf35F6NqeuDD
+
+### ============================================================================
+### PASO 1: Solicitar Challenge
+### ============================================================================
+### Este endpoint crea un challenge que debes firmar con Phantom
+
+POST {{@api}}/auth/request-challenge
+Content-Type: application/json
+
+{
+  "publicKey": "{{@myWallet}}"
+}
+
+### Respuesta esperada:
+### {
+###   "success": true,
+###   "data": {
+###     "nonce": "abc123def456...",
+###     "message": "Sign this message to authenticate with ProWallet:\nnonce:abc123def456..."
+###   },
+###   "extra": {
+###     "expiresAt": "2024-12-12T12:30:00Z"
+###   }
+### }
+
+### GUARDA EL MESSAGE PARA EL SIGUIENTE PASO
+
+###
+
+### ============================================================================
+### PASO 2: Firmar el message con Phantom Wallet
+### ============================================================================
+### 1. En la consola del navegador o la app Phantom:
+###    - Conecta Phantom
+###    - Phantom mostrará: "Conectado: J3szAxVN..."
+###    - Haz clic en "Sign Message" 
+###    - Copia la firma que recibes
+### 
+### El message a firmar es el que obtuviste en PASO 1:
+### "Sign this message to authenticate with ProWallet:\nnonce:abc123def456..."
+
+###
+
+### ============================================================================
+### PASO 3: Enviar Firma al Backend (reemplaza con tu signature real)
+### ============================================================================
+### La signature viene firmada en base58 desde Phantom
+
+POST {{@api}}/auth/login-wallet
+Content-Type: application/json
+
+{
+  "publicKey": "{{@myWallet}}",
+  "message": "Sign this message to authenticate with ProWallet:\nnonce:abc123def456",
+  "signature": "REEMPLAZA_AQUI_CON_SIGNATURE_DE_PHANTOM"
+}
+
+### Respuesta esperada: 200 OK con accessToken
+### {
+###   "success": true,
+###   "accessToken": "eyJhbGciOiJIUzI1NiIs...",
+###   "refreshToken": "...",
+###   "user": {
+###     "id": "...",
+###     "username": "...",
+###     "publicKey": "J3szAxVN..."
+###   }
+### }
+
+###
+
+### ============================================================================
+### PASO 4: Verificar Usuario Autenticado
+### ============================================================================
+### Usa el accessToken obtenido en PASO 3
+
+GET {{@api}}/auth/me
+Authorization: Bearer {{@accessToken}}
+
+### Respuesta esperada: 200 OK
+### {
+###   "success": true,
+###   "user": {
+###     "id": "...",
+###     "username": "...",
+###     "publicKey": "J3szAxVN..."
+###   }
+### }
+
+###
+
+### ============================================================================
+### FLUJO COMPLETO RESUMIDO
+### ============================================================================
+###
+### 1. ✅ POST /auth/request-challenge
+###    └─ Obtener: { nonce, message }
+###
+### 2. ✅ Firmar message con Phantom Wallet
+###    └─ Obtener: signature en base58
+###
+### 3. ✅ POST /auth/login-wallet
+###    └─ Enviar: { publicKey, message, signature }
+###    └─ Obtener: { accessToken, refreshToken }
+###
+### 4. ✅ GET /auth/me
+###    └─ Verificar autenticación con accessToken
+###
+### ¡Listo! Ya tienes un usuario autenticado con tu wallet real.

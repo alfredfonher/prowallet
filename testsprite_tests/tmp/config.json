@@ -1,0 +1,14 @@
+{
+  "status": "commited",
+  "type": "backend",
+  "scope": "codebase",
+  "localEndpoint": "http://localhost:3001",
+  "backendAuthType": "public",
+  "executionArgs": {
+    "projectName": "prowallet-api",
+    "projectPath": "/home/aprog/Projects/github-project-work/github-proyect/prowallet",
+    "testIds": [],
+    "additionalInstruction": "Execute comprehensive tests for the ProWallet Trading Platform API backend, including authentication, trading, transfers, and integration tests. Focus on critical functionality and provide detailed results.",
+    "envs": {}
+  }
+}

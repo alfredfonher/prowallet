@@ -1,0 +1,28 @@
+### Variables de Configuración Global
+### Edita estos valores según tu necesidad
+
+@baseUrl = https://servicioshilda.orioncaribe.com/api/v1
+@devnetBaseUrl = https://servicioshilda.orioncaribe.com/api/v1
+@mainnetBaseUrl = https://servicioshilda.orioncaribe.com/api/v1
+
+### Variables de Wallet
+@walletAddress = 11111111111111111111111111111111
+@walletAddress2 = DX1oU5sRZDVBvNJhCdKYVhDvKzcLVKFPPxDrCnChJZzq
+
+### Variables de Transacciones
+@transactionId = 123e4567-e89b-12d3-a456-426614174000
+@signature = 4UVJ9k7c9V8K2m5X9p2N3Q4R5S6T7U8V9W0X1Y2Z3a4b5c6d7e8f9g0h1i2j3k4l5m6n7o8p9q
+
+### Variables de Montos
+@tokenAmount = 100
+@pricePerToken = 0.01
+@totalCost = 1.0
+
+### Variables de Métodos de Pago
+@paymentMethod = SOL
+# Opciones: SOL, USDC, stripe, coingate, nowpayments
+
+### Variables de Tiempo
+@timestamp = 2024-12-07T00:00:00Z
+@limit = 10
+@offset = 0

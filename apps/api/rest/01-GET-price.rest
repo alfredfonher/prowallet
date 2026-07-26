@@ -1,0 +1,48 @@
+### 📄 PURCHASE - Obtener Precio del Token
+### GET /api/v1/purchase/price
+### Calcula el precio actual del token usando bonding curve
+### Documentación: Precio dinámico basado en cantidad
+
+@baseUrl = https://servicioshilda.orioncaribe.com/api/v1
+
+###
+# Obtener precio para 100 tokens (cantidad por defecto)
+GET {{baseUrl}}/purchase/price
+Accept: application/json
+
+###
+# Obtener precio para 1 token
+GET {{baseUrl}}/purchase/price?amount=1
+Accept: application/json
+
+###
+# Obtener precio para 10 tokens
+GET {{baseUrl}}/purchase/price?amount=10
+Accept: application/json
+
+###
+# Obtener precio para 1000 tokens (máximo)
+GET {{baseUrl}}/purchase/price?amount=1000
+Accept: application/json
+
+###
+# RESPUESTA ESPERADA (200 OK):
+# {
+#   "success": true,
+#   "code": 200,
+#   "message": "Precio calculado exitosamente",
+#   "data": {
+#     "tokenAmount": 100,
+#     "pricePerToken": 0.0123456789,
+#     "totalCost": 1.23456789,
+#     "gasCost": 0.00001,
+#     "bonding_curve_stage": "early",
+#     "timestamp": "2024-12-07T10:30:00Z"
+#   }
+# }
+
+###
+# ERRORES POSIBLES:
+# 400: Parámetros inválidos (amount negativo, no numérico)
+# 429: Rate limit excedido (demasiadas peticiones)
+# 500: Error interno del servidor

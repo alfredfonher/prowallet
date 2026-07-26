@@ -1,0 +1,79 @@
+### ============================================================================
+### TRANSFER ENDPOINTS
+### ============================================================================
+### Transferencias entre wallets
+
+@api = https://servicioshilda.orioncaribe.com/api/v1
+@accessToken = your_jwt_token_here
+
+### ============================================================================
+### 1. POST /transfer/initiate - Initiate Token Transfer
+### ============================================================================
+### Inicia una transferencia entre wallets
+### Pasos:
+### 1. Llamar este endpoint
+### 2. Obtener transactionBase64 para firmar
+### 3. Firmar con wallet origen
+### 4. Confirmar transferencia
+
+POST {{@api}}/transfer/initiate
+Content-Type: application/json
+Authorization: Bearer {{@accessToken}}
+
+{
+  "fromWallet": "4Nd1m1Q5WJGj5CqPKYrZL2g4X2Y8Z3A4B5C6D7E8",
+  "toWallet": "ABC123DEF456GHI789JKL012MNO345PQR678STU9",
+  "amount": 100
+}
+
+### Response should be 200 OK with:
+### {
+###   "success": true,
+###   "transactionId": "xfr_12345",
+###   "transactionBase64": "AQAAA...",
+###   "message": "Sign this transaction with your wallet"
+### }
+
+
+### ============================================================================
+### 2. POST /transfer/confirm/:transactionId - Confirm Transfer
+### ============================================================================
+### Confirma una transferencia después de firmarla
+
+POST {{@api}}/transfer/confirm/xfr_12345
+Content-Type: application/json
+
+{
+  "fromWallet": "4Nd1m1Q5WJGj5CqPKYrZL2g4X2Y8Z3A4B5C6D7E8",
+  "signature": "5K1fvW2xY3zZ4aA5bB6cC7dD8eE9fF0gG1hH2iI3jJ4kK5lL6mM7nN8oO9pP0qQ1rR2sS3tT4uU5vV6wW7xX8yY9zZ",
+  "transactionHash": "5K1fvW2xY3zZ4aA5bB6cC7dD8eE9fF0gG1hH2iI3jJ4kK5lL6mM7nN8oO9pP0qQ1rR2sS3tT4uU5vV6wW7xX8yY9zZ"
+}
+
+### Response should be 200 OK with:
+### {
+###   "success": true,
+###   "message": "Transfer confirmed",
+###   "amount": 100,
+###   "transactionHash": "..."
+### }
+
+
+### ============================================================================
+### 3. GET /transfer/status/:transactionId - Check Transfer Status
+### ============================================================================
+### Verifica el estado de una transferencia
+
+GET {{@api}}/transfer/status/xfr_12345
+
+### Response should be 200 OK with transfer status
+
+
+### ============================================================================
+### 4. GET /transfer/history/:wallet - Get Transfer History
+### ============================================================================
+### Obtiene histórico de transferencias de un wallet
+
+GET {{@api}}/transfer/history/4Nd1m1Q5WJGj5CqPKYrZL2g4X2Y8Z3A4B5C6D7E8?limit=20&offset=0
+
+### Response should be 200 OK with array of transfers
+

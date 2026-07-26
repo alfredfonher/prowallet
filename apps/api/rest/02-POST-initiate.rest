@@ -1,0 +1,114 @@
+### 📄 PURCHASE - Iniciar Compra
+### POST /api/v1/purchase/initiate
+### Inicia una transacción de compra y retorna instrucciones de transacción
+### Documentación: Crea una transacción pendiente en BD
+
+@baseUrl = https://servicioshilda.orioncaribe.com/api/v1
+@walletAddress = 11111111111111111111111111111111
+@tokenAmount = 100
+@paymentMethod = SOL
+
+###
+# Iniciar compra con SOL (método recomendado)
+POST {{baseUrl}}/purchase/initiate
+Content-Type: application/json
+Accept: application/json
+
+{
+  "walletAddress": "{{walletAddress}}",
+  "tokenAmount": {{tokenAmount}},
+  "paymentMethod": "{{paymentMethod}}"
+}
+
+###
+# Iniciar compra con USDC
+POST {{baseUrl}}/purchase/initiate
+Content-Type: application/json
+Accept: application/json
+
+{
+  "walletAddress": "{{walletAddress}}",
+  "tokenAmount": 100,
+  "paymentMethod": "USDC"
+}
+
+###
+# Iniciar compra con Stripe (Fiat)
+POST {{baseUrl}}/purchase/initiate
+Content-Type: application/json
+Accept: application/json
+
+{
+  "walletAddress": "{{walletAddress}}",
+  "tokenAmount": 50,
+  "paymentMethod": "stripe",
+  "email": "usuario@example.com"
+}
+
+###
+# Iniciar compra con Coingate (Crypto)
+POST {{baseUrl}}/purchase/initiate
+Content-Type: application/json
+Accept: application/json
+
+{
+  "walletAddress": "{{walletAddress}}",
+  "tokenAmount": 100,
+  "paymentMethod": "coingate"
+}
+
+###
+# Iniciar compra con slippage tolerance personalizado
+POST {{baseUrl}}/purchase/initiate
+Content-Type: application/json
+Accept: application/json
+
+{
+  "walletAddress": "{{walletAddress}}",
+  "tokenAmount": 100,
+  "paymentMethod": "SOL",
+  "slippageTolerance": 0.5
+}
+
+###
+# RESPUESTA ESPERADA (200 OK) para SOL:
+# {
+#   "success": true,
+#   "code": 200,
+#   "message": "OK",
+#   "extra": {
+#     "transactionId": "550e8400-e29b-41d4-a716-446655440000",  ← COPIA ESTE ID
+#     "walletAddress": "11111111111111111111111111111111",
+#     "tokenAmount": 100,
+#     "pricePerToken": 0,
+#     "totalCost": 0.000005,
+#     "status": "pending",
+#     "txBase64": "AQAAAAAAAAAAAA...",
+#     "memo": "GAPC-PURCHASE-550e8400-e29b-41d4-a716-446655440000",
+#     "testMode": true,
+#     "fees": 0.00001
+#   }
+# }
+# 
+# ⚠️ IMPORTANTE: Copia el "transactionId" y pégalo en:
+#   1. 03-POST-confirm.rest (en la URL)
+#   2. 07-GET-status.rest (en @transactionId)
+#     "status": "pending",
+#     "walletAddress": "11111111111111111111111111111111",
+#     "tokenAmount": 100,
+#     "totalCost": 1.23456789,
+#     "paymentMethod": "SOL",
+#     "txBase64": "AQADCg0AAAAAAA...",
+#     "createdAt": "2024-12-07T10:30:00Z",
+#     "expiresAt": "2024-12-07T10:35:00Z"
+#   }
+# }
+
+###
+# ERRORES POSIBLES:
+# 400: 
+#   - Wallet inválida
+#   - Cantidad de tokens no válida
+#   - Método de pago no soportado
+# 429: Rate limit excedido
+# 500: Error interno del servidor

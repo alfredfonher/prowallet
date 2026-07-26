@@ -1,0 +1,475 @@
+{
+  "tech_stack": [
+    "TypeScript",
+    "Node.js",
+    "Express.js",
+    "PostgreSQL",
+    "Prisma ORM",
+    "Redis",
+    "Solana Web3.js",
+    "Anchor Framework",
+    "JWT",
+    "Socket.io",
+    "Swagger/OpenAPI",
+    "Vitest"
+  ],
+  "features": [
+    {
+      "name": "Authentication API",
+      "description": "User authentication with wallet signatures and JWT tokens",
+      "files": [
+        "apps/api/src/controllers/auth/AuthController.ts",
+        "apps/api/src/routes/auth/auth.routes.ts",
+        "apps/api/src/services/auth-challenge.service.ts"
+      ],
+      "api_doc": {
+        "openapi": "3.0.0",
+        "info": {
+          "title": "Authentication API",
+          "version": "1.0.0"
+        },
+        "paths": {
+          "/api/v1/auth/login-wallet": {
+            "post": {
+              "summary": "Login with wallet signature",
+              "tags": ["Authentication"],
+              "requestBody": {
+                "required": true,
+                "content": {
+                  "application/json": {
+                    "schema": {
+                      "type": "object",
+                      "properties": {
+                        "walletAddress": { "type": "string" },
+                        "signature": { "type": "string" },
+                        "challenge": { "type": "string" }
+                      }
+                    }
+                  }
+                }
+              },
+              "responses": {
+                "200": {
+                  "description": "Login successful",
+                  "content": {
+                    "application/json": {
+                      "schema": {
+                        "type": "object",
+                        "properties": {
+                          "token": { "type": "string" },
+                          "user": { "type": "object" }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "/api/v1/auth/me": {
+            "get": {
+              "summary": "Get current user info",
+              "tags": ["Authentication"],
+              "security": [{ "jwtAuth": [] }],
+              "responses": {
+                "200": {
+                  "description": "User information",
+                  "content": {
+                    "application/json": {
+                      "schema": {
+                        "type": "object",
+                        "properties": {
+                          "id": { "type": "string" },
+                          "walletAddress": { "type": "string" },
+                          "createdAt": { "type": "string" }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "Exchange & Trading API",
+      "description": "Token trading with dynamic pricing and multiple payment methods",
+      "files": [
+        "apps/api/src/controllers/exchange/ExchangeController.ts",
+        "apps/api/src/routes/exchange/exchange.routes.ts",
+        "apps/api/src/services/price/price.service.ts",
+        "apps/api/src/services/solana/solana.service.ts"
+      ],
+      "api_doc": {
+        "openapi": "3.0.0",
+        "info": {
+          "title": "Exchange Trading API",
+          "version": "1.0.0"
+        },
+        "paths": {
+          "/api/v1/exchange/buyTokens": {
+            "post": {
+              "summary": "Buy PROWALLET tokens",
+              "tags": ["Trading"],
+              "security": [{ "jwtAuth": [] }],
+              "requestBody": {
+                "required": true,
+                "content": {
+                  "application/json": {
+                    "schema": {
+                      "type": "object",
+                      "properties": {
+                        "amount": { "type": "number" },
+                        "paymentMethod": { "type": "string" },
+                        "walletAddress": { "type": "string" }
+                      }
+                    }
+                  }
+                }
+              },
+              "responses": {
+                "200": {
+                  "description": "Purchase initiated",
+                  "content": {
+                    "application/json": {
+                      "schema": {
+                        "type": "object",
+                        "properties": {
+                          "transactionId": { "type": "string" },
+                          "status": { "type": "string" },
+                          "amount": { "type": "number" }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "/api/v1/exchange/getPrice": {
+            "get": {
+              "summary": "Get current token price",
+              "tags": ["Trading"],
+              "responses": {
+                "200": {
+                  "description": "Current token price",
+                  "content": {
+                    "application/json": {
+                      "schema": {
+                        "type": "object",
+                        "properties": {
+                          "price": { "type": "number" },
+                          "currency": { "type": "string" }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "Transfer API",
+      "description": "Peer-to-peer token transfers with address book management",
+      "files": [
+        "apps/api/src/controllers/transfer/transfer.controller.ts",
+        "apps/api/src/controllers/transfer/address-book.controller.ts",
+        "apps/api/src/routes/transfer.routes.ts"
+      ],
+      "api_doc": {
+        "openapi": "3.0.0",
+        "info": {
+          "title": "Transfer API",
+          "version": "1.0.0"
+        },
+        "paths": {
+          "/api/v1/transfer/initiate": {
+            "post": {
+              "summary": "Initiate token transfer",
+              "tags": ["Transfer"],
+              "security": [{ "jwtAuth": [] }],
+              "requestBody": {
+                "required": true,
+                "content": {
+                  "application/json": {
+                    "schema": {
+                      "type": "object",
+                      "properties": {
+                        "recipientAddress": { "type": "string" },
+                        "amount": { "type": "number" },
+                        "walletAddress": { "type": "string" }
+                      }
+                    }
+                  }
+                }
+              },
+              "responses": {
+                "200": {
+                  "description": "Transfer initiated",
+                  "content": {
+                    "application/json": {
+                      "schema": {
+                        "type": "object",
+                        "properties": {
+                          "transactionId": { "type": "string" },
+                          "status": { "type": "string" }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "/api/v1/transfer/address": {
+            "post": {
+              "summary": "Add address to address book",
+              "tags": ["Address Book"],
+              "security": [{ "jwtAuth": [] }],
+              "requestBody": {
+                "required": true,
+                "content": {
+                  "application/json": {
+                    "schema": {
+                      "type": "object",
+                      "properties": {
+                        "label": { "type": "string" },
+                        "address": { "type": "string" }
+                      }
+                    }
+                  }
+                }
+              },
+              "responses": {
+                "200": {
+                  "description": "Address added successfully"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "ProWallet Protocol API",
+      "description": "Smart contract interaction and whitelist management",
+      "files": [
+        "apps/api/src/routes/prowallet.routes.ts",
+        "apps/api/src/services/solana/solana.service.ts"
+      ],
+      "api_doc": {
+        "openapi": "3.0.0",
+        "info": {
+          "title": "ProWallet Protocol API",
+          "version": "1.0.0"
+        },
+        "paths": {
+          "/api/v1/prowallet/contract-info": {
+            "get": {
+              "summary": "Get smart contract information",
+              "tags": ["Protocol"],
+              "responses": {
+                "200": {
+                  "description": "Contract information",
+                  "content": {
+                    "application/json": {
+                      "schema": {
+                        "type": "object",
+                        "properties": {
+                          "programId": { "type": "string" },
+                          "tokenMint": { "type": "string" },
+                          "network": { "type": "string" }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "/api/v1/prowallet/whitelist": {
+            "get": {
+              "summary": "Get current whitelist",
+              "tags": ["Protocol"],
+              "security": [{ "jwtAuth": [] }],
+              "responses": {
+                "200": {
+                  "description": "Whitelist addresses",
+                  "content": {
+                    "application/json": {
+                      "schema": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "address": { "type": "string" },
+                            "isActive": { "type": "boolean" }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "Health Check API",
+      "description": "System health monitoring and diagnostics",
+      "files": [
+        "apps/api/src/routes/health.routes.ts",
+        "apps/api/src/services/database/database.service.ts"
+      ],
+      "api_doc": {
+        "openapi": "3.0.0",
+        "info": {
+          "title": "Health Check API",
+          "version": "1.0.0"
+        },
+        "paths": {
+          "/api/v1/health": {
+            "get": {
+              "summary": "Basic health check",
+              "tags": ["Health"],
+              "responses": {
+                "200": {
+                  "description": "Service healthy",
+                  "content": {
+                    "application/json": {
+                      "schema": {
+                        "type": "object",
+                        "properties": {
+                          "status": { "type": "string" },
+                          "timestamp": { "type": "string" }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "/api/v1/health/deep": {
+            "get": {
+              "summary": "Deep health check of all services",
+              "tags": ["Health"],
+              "responses": {
+                "200": {
+                  "description": "All services status",
+                  "content": {
+                    "application/json": {
+                      "schema": {
+                        "type": "object",
+                        "properties": {
+                          "database": { "type": "object" },
+                          "redis": { "type": "object" },
+                          "solana": { "type": "object" }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "Admin API",
+      "description": "Administrative functions and metadata management",
+      "files": [
+        "apps/api/src/controllers/admin/transfer.controller.ts",
+        "apps/api/src/routes/admin/metadata.routes.ts"
+      ],
+      "api_doc": {
+        "openapi": "3.0.0",
+        "info": {
+          "title": "Admin API",
+          "version": "1.0.0"
+        },
+        "paths": {
+          "/api/v1/admin/metadata": {
+            "get": {
+              "summary": "List all admin metadata",
+              "tags": ["Admin"],
+              "security": [{ "jwtAuth": [] }],
+              "responses": {
+                "200": {
+                  "description": "Metadata list",
+                  "content": {
+                    "application/json": {
+                      "schema": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "key": { "type": "string" },
+                            "value": { "type": "string" },
+                            "updatedAt": { "type": "string" }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "Payment Webhooks API",
+      "description": "Payment processor webhook handling",
+      "files": [
+        "apps/api/src/routes/payments/webhook.routes.ts",
+        "apps/api/src/services/payments/payment.service.ts"
+      ],
+      "api_doc": {
+        "openapi": "3.0.0",
+        "info": {
+          "title": "Payment Webhooks API",
+          "version": "1.0.0"
+        },
+        "paths": {
+          "/api/v1/payments/webhook": {
+            "post": {
+              "summary": "Process payment webhooks",
+              "tags": ["Payments"],
+              "requestBody": {
+                "required": true,
+                "content": {
+                  "application/json": {
+                    "schema": {
+                      "type": "object",
+                      "properties": {
+                        "processor": { "type": "string" },
+                        "eventId": { "type": "string" },
+                        "status": { "type": "string" },
+                        "data": { "type": "object" }
+                      }
+                    }
+                  }
+                }
+              },
+              "responses": {
+                "200": {
+                  "description": "Webhook processed successfully"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
+}

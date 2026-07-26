@@ -1,0 +1,78 @@
+FROM node:24-slim
+
+WORKDIR /app
+
+# Step 1: Copiar pnpm config files
+COPY pnpm-lock.yaml pnpm-workspace.yaml .pnpmfile.cjs* ./
+
+# Step 2: Copiar package.json files
+COPY package.json ./
+COPY apps/web/package.json ./apps/web/
+COPY packages/ ./packages/
+
+# Step 3: Instalar pnpm globalmente
+RUN npm install -g pnpm@10.24.0
+
+# Step 4: Instalar todas las dependencias del workspace con pnpm
+RUN pnpm install --frozen-lockfile
+
+# Step 5: Copiar el resto del código fuente
+COPY . .
+
+# Step 6: Build del web
+RUN pnpm --filter exchange-web-ui build
+
+# Step 7: Limpiar archivos y directorios no necesarios para runtime
+RUN rm -rf .git .gitignore .turbo .vscode documentation scripts && \
+    rm -rf apps/api packages/*/src .env.example prisma && \
+    find . -name "*.map" -delete && \
+    find . -name "*.ts" -not -path "*/node_modules/*" -delete && \
+    find . -name "tsconfig.json" -not -path "*/node_modules/*" -delete && \
+    find . -type d -name ".next" -path "*/apps/api/*" -exec rm -rf {} + 2>/dev/null || true && \
+    find . -type d -name "dist" -path "*/apps/api/*" -exec rm -rf {} + 2>/dev/null || true
+
+# Variables de entorno
+ENV NODE_ENV=production
+ENV NEXT_TELEMETRY_DISABLED=1
+ENV PORT=3000
+
+# ============================================================================
+# ENVIRONMENT CONFIGURATION
+# ============================================================================
+# Explicit environment declaration for production
+# ⭐ CRITICAL: Controls which API URL is used
+# Values: "local" (localhost) or "production" (cloud API)
+ENV NEXT_PUBLIC_ENVIRONMENT=production
+
+# Solana mainnet config (Helius RPC)
+ENV NEXT_PUBLIC_SOLANA_NETWORK=mainnet-beta
+ENV NEXT_PUBLIC_SOLANA_RPC_URL=https://mainnet.helius-rpc.com/?api-key=97cdbcf5-714f-4e61-b355-93368a279e34
+ENV NEXT_PUBLIC_FALLBACK_SOLANA_RPC_URL=https://api.rpcpool.com
+ENV NEXT_PUBLIC_PROWALLET_PROGRAM_ID=7sa2XazRU4R6DcsNLGMWcX4nabCzWwjj3Awfh1gxhtem
+
+# Helius API endpoints (for frontend transaction parsing)
+ENV NEXT_PUBLIC_HELIUS_API_KEY=97cdbcf5-714f-4e61-b355-93368a279e34
+ENV NEXT_PUBLIC_HELIUS_PARSE_TRANSACTION_URL=https://api-mainnet.helius-rpc.com/v0/transactions/?api-key=97cdbcf5-714f-4e61-b355-93368a279e34
+ENV NEXT_PUBLIC_HELIUS_PARSE_HISTORY_URL=https://api-mainnet.helius-rpc.com/v0/addresses/{address}/transactions/?api-key=97cdbcf5-714f-4e61-b355-93368a279e34
+
+# Token config (public - from local development)
+ENV NEXT_PUBLIC_TOKEN_MINT=D8TwbwGGmyucrxPB9uscait27caVgeqYHPpyN3XXjUX3
+ENV NEXT_PUBLIC_TOKEN_NAME=ProWallet
+ENV NEXT_PUBLIC_TOKEN_SYMBOL=GAPC
+ENV NEXT_PUBLIC_TEST_MODE_FREE_TOKEN=false
+
+# API config - MUST be set at runtime via .env.docker
+# This tells frontend where to call the backend API
+ENV NEXT_PUBLIC_API_URL=https://servicioshilda.orioncaribe.com/api/v1
+
+# Helius API Key for transaction parsing (MUST be set at runtime via .env.docker)
+ENV NEXT_PUBLIC_HELIUS_API_KEY=97cdbcf5-714f-4e61-b355-93368a279e34
+
+WORKDIR /app/apps/web
+
+EXPOSE 3000
+
+HEALTHCHECK --interval=30s --timeout=10s --start-period=15s --retries=3 \
+    CMD curl -f http://localhost:3000/ || exit 1
+
+CMD ["pnpm", "start"]

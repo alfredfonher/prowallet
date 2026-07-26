@@ -1,0 +1,65 @@
+### 📄 PURCHASE - Estadísticas de Mercado
+### GET /api/v1/purchase/market-stats
+### Obtiene estadísticas del mercado (precio, cap, volumen, etc.)
+### Documentación: Datos en tiempo real desde CoinGecko
+
+@baseUrl = https://servicioshilda.orioncaribe.com/api/v1
+
+###
+# Obtener estadísticas de mercado completas
+GET {{baseUrl}}/purchase/market-stats
+Accept: application/json
+
+###
+# RESPUESTA ESPERADA (200 OK):
+# {
+#   "success": true,
+#   "code": 200,
+#   "message": "Estadísticas del mercado obtenidas exitosamente",
+#   "data": {
+#     "current_price": 0.0123456789,
+#     "market_cap": 123456.78,
+#     "market_cap_rank": 5000,
+#     "total_volume": 45678.90,
+#     "high_24h": 0.0125,
+#     "low_24h": 0.0120,
+#     "price_change_24h": 0.00001234,
+#     "price_change_percentage_24h": 0.125,
+#     "circulating_supply": 10000000,
+#     "total_supply": 10000000,
+#     "max_supply": 21000000,
+#     "ath": 0.05,
+#     "atl": 0.001,
+#     "ath_change_percentage": -75.3,
+#     "atl_change_percentage": 1134.5,
+#     "ath_date": "2024-11-15T18:30:00Z",
+#     "atl_date": "2023-01-01T00:00:00Z",
+#     "roi": null,
+#     "last_updated": "2024-12-07T10:30:00Z"
+#   }
+# }
+
+###
+# CAMPOS DISPONIBLES:
+# - current_price: Precio actual del token en USD
+# - market_cap: Capitalización de mercado total
+# - market_cap_rank: Posición en ranking global
+# - total_volume: Volumen de trading 24h
+# - high_24h: Máximo precio últimas 24h
+# - low_24h: Mínimo precio últimas 24h
+# - price_change_24h: Cambio de precio absoluto
+# - price_change_percentage_24h: Cambio de precio en porcentaje
+# - circulating_supply: Tokens en circulación
+# - total_supply: Suministro total
+# - max_supply: Suministro máximo
+# - ath: All time high
+# - atl: All time low
+# - ath_date: Fecha del ATH
+# - atl_date: Fecha del ATL
+# - last_updated: Última actualización
+
+###
+# ERRORES POSIBLES:
+# 429: Rate limit excedido
+# 500: Error al conectar con CoinGecko
+# 503: Servicio temporalmente no disponible

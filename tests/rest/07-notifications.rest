@@ -1,0 +1,127 @@
+### ============================================================================
+### NOTIFICATIONS ENDPOINTS
+### ============================================================================
+### Gestión de notificaciones
+
+@api = https://servicioshilda.orioncaribe.com/api/v1
+@accessToken = your_jwt_token_here
+
+### ============================================================================
+### 1. GET /notifications - Get User Notifications
+### ============================================================================
+### Obtiene todas las notificaciones del usuario autenticado
+
+GET {{@api}}/notifications?limit=20&offset=0
+Authorization: Bearer {{@accessToken}}
+
+### Response should be 200 OK with array of notifications:
+### {
+###   "success": true,
+###   "notifications": [
+###     {
+###       "id": "notif_12345",
+###       "type": "transaction",
+###       "title": "Purchase Completed",
+###       "message": "You successfully purchased 100 GAPC tokens",
+###       "read": false,
+###       "createdAt": "2024-01-01T12:00:00Z"
+###     },
+###     ...
+###   ]
+### }
+
+
+### ============================================================================
+### 2. GET /notifications/unread - Get Unread Notifications Count
+### ============================================================================
+### Obtiene el número de notificaciones sin leer
+
+GET {{@api}}/notifications/unread
+Authorization: Bearer {{@accessToken}}
+
+### Response should be 200 OK with:
+### {
+###   "success": true,
+###   "count": 5
+### }
+
+
+### ============================================================================
+### 3. POST /notifications/:id/read - Mark Notification as Read
+### ============================================================================
+### Marca una notificación como leída
+
+POST {{@api}}/notifications/notif_12345/read
+Authorization: Bearer {{@accessToken}}
+Content-Type: application/json
+
+{}
+
+### Response should be 200 OK
+
+
+### ============================================================================
+### 4. POST /notifications/read-all - Mark All as Read
+### ============================================================================
+### Marca todas las notificaciones como leídas
+
+POST {{@api}}/notifications/read-all
+Authorization: Bearer {{@accessToken}}
+Content-Type: application/json
+
+{}
+
+### Response should be 200 OK
+
+
+### ============================================================================
+### 5. DELETE /notifications/:id - Delete Notification
+### ============================================================================
+### Elimina una notificación
+
+DELETE {{@api}}/notifications/notif_12345
+Authorization: Bearer {{@accessToken}}
+
+### Response should be 200 OK
+
+
+### ============================================================================
+### 6. DELETE /notifications - Delete All Notifications
+### ============================================================================
+### Elimina todas las notificaciones
+
+DELETE {{@api}}/notifications
+Authorization: Bearer {{@accessToken}}
+
+### Response should be 200 OK
+
+
+### ============================================================================
+### 7. POST /notifications/subscribe - Subscribe to Notifications
+### ============================================================================
+### Se suscribe a cierto tipo de notificaciones
+
+POST {{@api}}/notifications/subscribe
+Authorization: Bearer {{@accessToken}}
+Content-Type: application/json
+
+{
+  "types": ["transaction", "purchase", "withdrawal"],
+  "email": true,
+  "push": true,
+  "inApp": true
+}
+
+### Response should be 200 OK
+
+
+### ============================================================================
+### 8. GET /notifications/preferences - Get Notification Preferences
+### ============================================================================
+### Obtiene preferencias de notificaciones
+
+GET {{@api}}/notifications/preferences
+Authorization: Bearer {{@accessToken}}
+
+### Response should be 200 OK with preferences
+

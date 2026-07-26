@@ -1,0 +1,45 @@
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Local env files
+.env
+.env.local
+.env.*.local
+.env.docker
+.env.docker.local
+
+# Build outputs
+.next/
+out/
+build/
+dist/
+
+# Turbo
+.turbo/
+
+# Testing
+coverage/
+
+# Dev tooling
+.codegraph/
+.atl/
+.engram/
+.opencode/
+*.db
+*.db-journal
+
+# OS / Editor
+.DS_Store
+Thumbs.db
+*.swp
+.vscode/
+.idea/
+
+# Logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+yarn-debug.log*
+yarn-error.log*

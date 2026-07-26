@@ -1,0 +1,104 @@
+### 📄 PURCHASE - Historial de Compras
+### GET /api/v1/purchase/history/:walletAddress
+### Obtiene el historial de todas las compras de una wallet
+### Documentación: Soporta paginación, filtros y ordenamiento
+
+@baseUrl = https://servicioshilda.orioncaribe.com/api/v1
+@walletAddress = 11111111111111111111111111111111
+@limit = 10
+@offset = 0
+
+###
+# Obtener historial de compras (últimas 10)
+GET {{baseUrl}}/purchase/history/{{walletAddress}}
+Accept: application/json
+
+###
+# Obtener historial con paginación (primeros 20)
+GET {{baseUrl}}/purchase/history/{{walletAddress}}?limit=20&offset=0
+Accept: application/json
+
+###
+# Obtener historial con filtro de estado (completadas)
+GET {{baseUrl}}/purchase/history/{{walletAddress}}?status=completed&limit=10
+Accept: application/json
+
+###
+# Obtener historial con filtro de estado (pendientes)
+GET {{baseUrl}}/purchase/history/{{walletAddress}}?status=pending&limit=10
+Accept: application/json
+
+###
+# Obtener historial ordenado por fecha descendente
+GET {{baseUrl}}/purchase/history/{{walletAddress}}?sort=date_desc&limit=10
+Accept: application/json
+
+###
+# Obtener historial ordenado por monto descendente
+GET {{baseUrl}}/purchase/history/{{walletAddress}}?sort=amount_desc&limit=10
+Accept: application/json
+
+###
+# Obtener historial filtrado por rango de fechas
+GET {{baseUrl}}/purchase/history/{{walletAddress}}?startDate=2024-01-01&endDate=2024-12-07
+Accept: application/json
+
+###
+# Obtener historial con múltiples filtros
+GET {{baseUrl}}/purchase/history/{{walletAddress}}?status=completed&paymentMethod=SOL&limit=20&offset=0
+Accept: application/json
+
+###
+# RESPUESTA ESPERADA (200 OK):
+# {
+#   "success": true,
+#   "code": 200,
+#   "message": "Historial obtenido exitosamente",
+#   "data": {
+#     "wallet": "11111111111111111111111111111111",
+#     "totalCount": 42,
+#     "pageCount": 5,
+#     "currentPage": 1,
+#     "limit": 10,
+#     "offset": 0,
+#     "purchases": [
+#       {
+#         "transactionId": "123e4567-e89b-12d3-a456-426614174000",
+#         "status": "completed",
+#         "tokenAmount": 100,
+#         "totalCost": 1.23456789,
+#         "paymentMethod": "SOL",
+#         "signature": "4UVJ9k7c9V8K2m5X9p2N3Q4R5S6T7U8...",
+#         "createdAt": "2024-12-07T10:30:00Z",
+#         "completedAt": "2024-12-07T10:30:45Z"
+#       },
+#       {
+#         "transactionId": "223e4567-e89b-12d3-a456-426614174001",
+#         "status": "completed",
+#         "tokenAmount": 50,
+#         "totalCost": 0.61728395,
+#         "paymentMethod": "USDC",
+#         "signature": "5VWK9k7c9V8K2m5X9p2N3Q4R5S6T7U8...",
+#         "createdAt": "2024-12-06T15:20:00Z",
+#         "completedAt": "2024-12-06T15:20:30Z"
+#       }
+#     ]
+#   }
+# }
+
+###
+# PARÁMETROS DE QUERY:
+# - limit: Número de resultados por página (default: 10, max: 100)
+# - offset: Número de resultados a saltar (default: 0)
+# - status: Filtrar por estado (pending, completed, failed, cancelled)
+# - paymentMethod: Filtrar por método (SOL, USDC, stripe, coingate)
+# - sort: Ordenar resultados (date_asc, date_desc, amount_asc, amount_desc)
+# - startDate: Fecha inicio (YYYY-MM-DD)
+# - endDate: Fecha fin (YYYY-MM-DD)
+
+###
+# ERRORES POSIBLES:
+# 400: Wallet inválida
+# 404: Wallet no encontrada
+# 429: Rate limit excedido
+# 500: Error interno del servidor

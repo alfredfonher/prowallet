@@ -1,0 +1,1245 @@
+{
+    "address": "7sa2XazRU4R6DcsNLGMWcX4nabCzWwjj3Awfh1gxhtem",
+    "metadata": {
+        "name": "prowallet_contract",
+        "version": "0.1.0",
+        "spec": "0.1.0",
+        "description": "ProWallet Revenue Sharing Contract - Secure GAPC token distribution system (Mainnet)"
+    },
+    "instructions": [
+        {
+            "name": "claim_rewards",
+            "docs": [
+                "Claim accumulated rewards (pull pattern)",
+                "",
+                "# Security: O(1) operation, no loops, safe arithmetic"
+            ],
+            "discriminator": [4, 144, 132, 71, 116, 23, 151, 80],
+            "accounts": [
+                {
+                    "name": "state"
+                },
+                {
+                    "name": "user",
+                    "writable": true,
+                    "pda": {
+                        "seeds": [
+                            {
+                                "kind": "const",
+                                "value": [117, 115, 101, 114]
+                            },
+                            {
+                                "kind": "account",
+                                "path": "user.owner",
+                                "account": "User"
+                            }
+                        ]
+                    }
+                },
+                {
+                    "name": "vault_token_account",
+                    "writable": true,
+                    "pda": {
+                        "seeds": [
+                            {
+                                "kind": "const",
+                                "value": [118, 97, 117, 108, 116]
+                            }
+                        ]
+                    }
+                },
+                {
+                    "name": "vault_authority",
+                    "pda": {
+                        "seeds": [
+                            {
+                                "kind": "const",
+                                "value": [118, 97, 117, 108, 116]
+                            }
+                        ]
+                    }
+                },
+                {
+                    "name": "user_token_account",
+                    "writable": true
+                },
+                {
+                    "name": "user_signer",
+                    "signer": true
+                },
+                {
+                    "name": "token_program",
+                    "address": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
+                }
+            ],
+            "args": []
+        },
+        {
+            "name": "deposit_revenue",
+            "docs": [
+                "Deposit revenue to be distributed among share holders",
+                "",
+                "# Security: Uses pull pattern - no iteration over users"
+            ],
+            "discriminator": [224, 212, 82, 100, 60, 240, 220, 29],
+            "accounts": [
+                {
+                    "name": "state",
+                    "writable": true
+                },
+                {
+                    "name": "vault_token_account",
+                    "writable": true,
+                    "pda": {
+                        "seeds": [
+                            {
+                                "kind": "const",
+                                "value": [118, 97, 117, 108, 116]
+                            }
+                        ]
+                    }
+                },
+                {
+                    "name": "from_token_account",
+                    "writable": true
+                },
+                {
+                    "name": "depositor",
+                    "signer": true
+                },
+                {
+                    "name": "token_program",
+                    "address": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
+                }
+            ],
+            "args": [
+                {
+                    "name": "amount",
+                    "type": "u64"
+                }
+            ]
+        },
+        {
+            "name": "emergency_stop",
+            "docs": [
+                "Emergency stop - can be called by any multisig signer",
+                "",
+                "# Security: Immediate circuit breaker"
+            ],
+            "discriminator": [179, 143, 200, 137, 108, 245, 248, 35],
+            "accounts": [
+                {
+                    "name": "state",
+                    "writable": true
+                },
+                {
+                    "name": "multisig"
+                },
+                {
+                    "name": "signer",
+                    "signer": true
+                }
+            ],
+            "args": []
+        },
+        {
+            "name": "execute_proposal",
+            "docs": [
+                "Execute a multisig proposal (admin operations)",
+                "",
+                "# Security: Requires M-of-N signatures and timelock"
+            ],
+            "discriminator": [186, 60, 116, 133, 108, 128, 111, 28],
+            "accounts": [
+                {
+                    "name": "state",
+                    "writable": true
+                },
+                {
+                    "name": "multisig"
+                },
+                {
+                    "name": "proposal",
+                    "writable": true
+                }
+            ],
+            "args": []
+        },
+        {
+            "name": "initialize",
+            "docs": [
+                "Initialize the revenue sharing contract with multisig authority",
+                "",
+                "# Security: Sets up vault PDA and initializes accumulator state"
+            ],
+            "discriminator": [175, 175, 109, 31, 13, 152, 155, 237],
+            "accounts": [
+                {
+                    "name": "state",
+                    "writable": true,
+                    "signer": true
+                },
+                {
+                    "name": "multisig",
+                    "writable": true,
+                    "signer": true
+                },
+                {
+                    "name": "vault",
+                    "writable": true,
+                    "pda": {
+                        "seeds": [
+                            {
+                                "kind": "const",
+                                "value": [118, 97, 117, 108, 116]
+                            }
+                        ]
+                    }
+                },
+                {
+                    "name": "mint"
+                },
+                {
+                    "name": "payer",
+                    "writable": true,
+                    "signer": true
+                },
+                {
+                    "name": "system_program",
+                    "address": "11111111111111111111111111111111"
+                },
+                {
+                    "name": "token_program",
+                    "address": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
+                },
+                {
+                    "name": "rent",
+                    "address": "SysvarRent111111111111111111111111111111111"
+                }
+            ],
+            "args": [
+                {
+                    "name": "total_shares",
+                    "type": "u64"
+                },
+                {
+                    "name": "required_signatures",
+                    "type": "u8"
+                },
+                {
+                    "name": "signers",
+                    "type": {
+                        "vec": "pubkey"
+                    }
+                }
+            ]
+        },
+        {
+            "name": "initialize_mother",
+            "docs": ["Initialize mother policy config (PDA) and link treasury"],
+            "discriminator": [224, 80, 9, 1, 154, 170, 20, 117],
+            "accounts": [
+                {
+                    "name": "mother_config",
+                    "writable": true,
+                    "signer": true
+                },
+                {
+                    "name": "treasury",
+                    "writable": true
+                },
+                {
+                    "name": "mint"
+                },
+                {
+                    "name": "payer",
+                    "writable": true,
+                    "signer": true
+                },
+                {
+                    "name": "authority",
+                    "docs": ["Authority (PDA/governance)"],
+                    "signer": true
+                },
+                {
+                    "name": "system_program",
+                    "address": "11111111111111111111111111111111"
+                }
+            ],
+            "args": [
+                {
+                    "name": "fee_bps",
+                    "type": "u16"
+                },
+                {
+                    "name": "burn_bps",
+                    "type": "u16"
+                }
+            ]
+        },
+        {
+            "name": "initialize_virgin",
+            "docs": [
+                "Create a virgin token config (mint creation done off-chain or via CPI)"
+            ],
+            "discriminator": [49, 78, 59, 214, 23, 231, 40, 227],
+            "accounts": [
+                {
+                    "name": "virgin_config",
+                    "writable": true,
+                    "signer": true
+                },
+                {
+                    "name": "factory",
+                    "writable": true,
+                    "signer": true
+                },
+                {
+                    "name": "mint"
+                },
+                {
+                    "name": "payer",
+                    "writable": true,
+                    "signer": true
+                },
+                {
+                    "name": "issuer"
+                },
+                {
+                    "name": "system_program",
+                    "address": "11111111111111111111111111111111"
+                }
+            ],
+            "args": [
+                {
+                    "name": "service_id",
+                    "type": {
+                        "array": ["u8", 32]
+                    }
+                },
+                {
+                    "name": "cap",
+                    "type": "u64"
+                },
+                {
+                    "name": "decimals",
+                    "type": "u8"
+                },
+                {
+                    "name": "transferable",
+                    "type": "bool"
+                },
+                {
+                    "name": "metadata_uri",
+                    "type": "string"
+                },
+                {
+                    "name": "mint_config",
+                    "type": {
+                        "defined": {
+                            "name": "VirginMintConfig"
+                        }
+                    }
+                },
+                {
+                    "name": "bump",
+                    "type": "u8"
+                }
+            ]
+        },
+        {
+            "name": "mint_virgin",
+            "docs": ["Mint virgin tokens under factory rules (scaffolding)"],
+            "discriminator": [13, 151, 175, 236, 145, 28, 150, 48],
+            "accounts": [
+                {
+                    "name": "virgin_config"
+                },
+                {
+                    "name": "to",
+                    "writable": true,
+                    "signer": true
+                }
+            ],
+            "args": [
+                {
+                    "name": "amount",
+                    "type": "u64"
+                }
+            ]
+        },
+        {
+            "name": "pay",
+            "docs": [
+                "Simple pay endpoint: accepts a payment amount (units are application specific)"
+            ],
+            "discriminator": [119, 18, 216, 65, 192, 117, 122, 220],
+            "accounts": [
+                {
+                    "name": "payer",
+                    "writable": true,
+                    "signer": true
+                },
+                {
+                    "name": "merchant"
+                }
+            ],
+            "args": [
+                {
+                    "name": "amount",
+                    "type": "u64"
+                }
+            ]
+        },
+        {
+            "name": "register_user",
+            "docs": [
+                "Register a user in the revenue sharing system",
+                "",
+                "# Security: Validates merkle proof for whitelist membership"
+            ],
+            "discriminator": [2, 241, 150, 223, 99, 214, 116, 97],
+            "accounts": [
+                {
+                    "name": "state"
+                },
+                {
+                    "name": "user",
+                    "writable": true,
+                    "pda": {
+                        "seeds": [
+                            {
+                                "kind": "const",
+                                "value": [117, 115, 101, 114]
+                            },
+                            {
+                                "kind": "account",
+                                "path": "owner"
+                            }
+                        ]
+                    }
+                },
+                {
+                    "name": "owner",
+                    "writable": true,
+                    "signer": true
+                },
+                {
+                    "name": "system_program",
+                    "address": "11111111111111111111111111111111"
+                }
+            ],
+            "args": [
+                {
+                    "name": "shares",
+                    "type": "u64"
+                },
+                {
+                    "name": "merkle_proof",
+                    "type": {
+                        "vec": {
+                            "array": ["u8", 32]
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "set_mother_fees",
+            "docs": ["Update fees in mother policy (governed in production)"],
+            "discriminator": [194, 183, 226, 52, 142, 46, 217, 74],
+            "accounts": [
+                {
+                    "name": "mother_config",
+                    "writable": true
+                },
+                {
+                    "name": "authority",
+                    "signer": true
+                }
+            ],
+            "args": [
+                {
+                    "name": "fee_bps",
+                    "type": "u16"
+                },
+                {
+                    "name": "burn_bps",
+                    "type": "u16"
+                }
+            ]
+        },
+        {
+            "name": "update_user_shares",
+            "docs": [
+                "Update user shares (for token transfers, minting, etc.)",
+                "",
+                "# Security: Updates reward debt to prevent gaming"
+            ],
+            "discriminator": [31, 89, 70, 101, 138, 179, 58, 63],
+            "accounts": [
+                {
+                    "name": "state"
+                },
+                {
+                    "name": "user",
+                    "writable": true,
+                    "pda": {
+                        "seeds": [
+                            {
+                                "kind": "const",
+                                "value": [117, 115, 101, 114]
+                            },
+                            {
+                                "kind": "account",
+                                "path": "user.owner",
+                                "account": "User"
+                            }
+                        ]
+                    }
+                },
+                {
+                    "name": "authority",
+                    "docs": [
+                        "Authority that can update shares (could be token program)"
+                    ],
+                    "signer": true
+                }
+            ],
+            "args": [
+                {
+                    "name": "new_shares",
+                    "type": "u64"
+                }
+            ]
+        }
+    ],
+    "accounts": [
+        {
+            "name": "MotherConfig",
+            "discriminator": [126, 219, 96, 113, 29, 178, 221, 41]
+        },
+        {
+            "name": "Multisig",
+            "discriminator": [224, 116, 121, 186, 68, 161, 79, 236]
+        },
+        {
+            "name": "Proposal",
+            "discriminator": [26, 94, 189, 187, 116, 136, 53, 33]
+        },
+        {
+            "name": "State",
+            "discriminator": [216, 146, 107, 94, 104, 75, 182, 177]
+        },
+        {
+            "name": "User",
+            "discriminator": [159, 117, 95, 227, 239, 151, 58, 236]
+        },
+        {
+            "name": "VirginConfig",
+            "discriminator": [112, 116, 229, 66, 12, 8, 224, 85]
+        }
+    ],
+    "events": [
+        {
+            "name": "ContractInitialized",
+            "discriminator": [233, 69, 33, 152, 208, 61, 150, 192]
+        },
+        {
+            "name": "ContractPaused",
+            "discriminator": [101, 135, 79, 82, 111, 71, 59, 58]
+        },
+        {
+            "name": "ContractUnpaused",
+            "discriminator": [76, 243, 98, 232, 125, 138, 24, 214]
+        },
+        {
+            "name": "EmergencyModeActivated",
+            "discriminator": [2, 185, 55, 165, 152, 63, 19, 216]
+        },
+        {
+            "name": "EmergencyStopEvent",
+            "discriminator": [44, 170, 247, 63, 91, 138, 146, 110]
+        },
+        {
+            "name": "MotherFeesUpdated",
+            "discriminator": [222, 255, 184, 135, 142, 35, 229, 148]
+        },
+        {
+            "name": "MotherInitialized",
+            "discriminator": [152, 157, 252, 149, 228, 224, 175, 206]
+        },
+        {
+            "name": "PaymentReceived",
+            "discriminator": [238, 145, 50, 71, 36, 83, 130, 215]
+        },
+        {
+            "name": "RevenueDeposited",
+            "discriminator": [97, 189, 62, 159, 189, 208, 43, 181]
+        },
+        {
+            "name": "RewardsClaimed",
+            "discriminator": [75, 98, 88, 18, 219, 112, 88, 121]
+        },
+        {
+            "name": "UserRegistered",
+            "discriminator": [21, 42, 216, 163, 99, 51, 200, 222]
+        },
+        {
+            "name": "UserSharesUpdated",
+            "discriminator": [208, 37, 229, 47, 21, 82, 45, 94]
+        },
+        {
+            "name": "VirginConfigCreated",
+            "discriminator": [77, 45, 87, 172, 18, 224, 207, 203]
+        },
+        {
+            "name": "VirginMinted",
+            "discriminator": [244, 86, 163, 194, 191, 159, 255, 27]
+        },
+        {
+            "name": "WalletWhitelisted",
+            "discriminator": [107, 131, 66, 173, 246, 146, 200, 150]
+        }
+    ],
+    "errors": [
+        {
+            "code": 6000,
+            "name": "InvalidDecimals",
+            "msg": "Decimales fuera de rango"
+        },
+        {
+            "code": 6001,
+            "name": "InvalidCap",
+            "msg": "Cap fuera de rango"
+        },
+        {
+            "code": 6002,
+            "name": "InvalidMintConfig",
+            "msg": "Configuración de mint inválida"
+        },
+        {
+            "code": 6003,
+            "name": "InvalidMetadataUri",
+            "msg": "URI de metadata inválida"
+        },
+        {
+            "code": 6004,
+            "name": "InvalidCooldown",
+            "msg": "Cooldown fuera de rango"
+        },
+        {
+            "code": 6005,
+            "name": "InCooldown",
+            "msg": "En cooldown"
+        },
+        {
+            "code": 6006,
+            "name": "KycRequired",
+            "msg": "KYC requerido"
+        }
+    ],
+    "types": [
+        {
+            "name": "ContractInitialized",
+            "type": {
+                "kind": "struct",
+                "fields": [
+                    {
+                        "name": "total_shares",
+                        "type": "u64"
+                    },
+                    {
+                        "name": "required_signatures",
+                        "type": "u8"
+                    },
+                    {
+                        "name": "signers",
+                        "type": {
+                            "vec": "pubkey"
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "name": "ContractPaused",
+            "type": {
+                "kind": "struct",
+                "fields": [
+                    {
+                        "name": "slot",
+                        "type": "u64"
+                    }
+                ]
+            }
+        },
+        {
+            "name": "ContractUnpaused",
+            "type": {
+                "kind": "struct",
+                "fields": [
+                    {
+                        "name": "slot",
+                        "type": "u64"
+                    }
+                ]
+            }
+        },
+        {
+            "name": "EmergencyModeActivated",
+            "type": {
+                "kind": "struct",
+                "fields": [
+                    {
+                        "name": "slot",
+                        "type": "u64"
+                    }
+                ]
+            }
+        },
+        {
+            "name": "EmergencyStopEvent",
+            "type": {
+                "kind": "struct",
+                "fields": [
+                    {
+                        "name": "triggered_by",
+                        "type": "pubkey"
+                    },
+                    {
+                        "name": "slot",
+                        "type": "u64"
+                    }
+                ]
+            }
+        },
+        {
+            "name": "MotherConfig",
+            "type": {
+                "kind": "struct",
+                "fields": [
+                    {
+                        "name": "mother_mint",
+                        "docs": ["Token mint administrado por este contrato"],
+                        "type": "pubkey"
+                    },
+                    {
+                        "name": "fee_bps",
+                        "docs": [
+                            "Fee base para distribución de ingresos (basis points)"
+                        ],
+                        "type": "u16"
+                    },
+                    {
+                        "name": "burn_bps",
+                        "docs": [
+                            "Porcentaje de burn automático (basis points)"
+                        ],
+                        "type": "u16"
+                    },
+                    {
+                        "name": "treasury",
+                        "docs": ["Cuenta de tesorería que recibe fees"],
+                        "type": "pubkey"
+                    },
+                    {
+                        "name": "bump",
+                        "docs": ["Bump seed para PDA"],
+                        "type": "u8"
+                    },
+                    {
+                        "name": "last_update",
+                        "docs": ["Último slot de actualización"],
+                        "type": "u64"
+                    },
+                    {
+                        "name": "total_supply",
+                        "docs": ["Total circulante"],
+                        "type": "u64"
+                    },
+                    {
+                        "name": "stability",
+                        "docs": ["Parámetros de estabilidad"],
+                        "type": {
+                            "defined": {
+                                "name": "StabilityConfig"
+                            }
+                        }
+                    },
+                    {
+                        "name": "authority",
+                        "docs": ["Autoridad del contrato"],
+                        "type": "pubkey"
+                    },
+                    {
+                        "name": "nonce",
+                        "docs": ["Nonce para derivación de PDA"],
+                        "type": "u8"
+                    }
+                ]
+            }
+        },
+        {
+            "name": "MotherFeesUpdated",
+            "type": {
+                "kind": "struct",
+                "fields": [
+                    {
+                        "name": "mint",
+                        "type": "pubkey"
+                    },
+                    {
+                        "name": "fee_bps",
+                        "type": "u16"
+                    },
+                    {
+                        "name": "burn_bps",
+                        "type": "u16"
+                    }
+                ]
+            }
+        },
+        {
+            "name": "MotherInitialized",
+            "type": {
+                "kind": "struct",
+                "fields": [
+                    {
+                        "name": "mint",
+                        "type": "pubkey"
+                    },
+                    {
+                        "name": "fee_bps",
+                        "type": "u16"
+                    },
+                    {
+                        "name": "burn_bps",
+                        "type": "u16"
+                    }
+                ]
+            }
+        },
+        {
+            "name": "Multisig",
+            "docs": ["Multisig configuration"],
+            "type": {
+                "kind": "struct",
+                "fields": [
+                    {
+                        "name": "required_signatures",
+                        "docs": ["Required number of signatures"],
+                        "type": "u8"
+                    },
+                    {
+                        "name": "signers",
+                        "docs": ["List of authorized signers"],
+                        "type": {
+                            "vec": "pubkey"
+                        }
+                    },
+                    {
+                        "name": "proposal_count",
+                        "docs": ["Counter for proposal IDs"],
+                        "type": "u64"
+                    }
+                ]
+            }
+        },
+        {
+            "name": "PaymentReceived",
+            "type": {
+                "kind": "struct",
+                "fields": [
+                    {
+                        "name": "payer",
+                        "type": "pubkey"
+                    },
+                    {
+                        "name": "merchant",
+                        "type": "pubkey"
+                    },
+                    {
+                        "name": "amount",
+                        "type": "u64"
+                    }
+                ]
+            }
+        },
+        {
+            "name": "Proposal",
+            "docs": ["Proposal for multisig operations"],
+            "type": {
+                "kind": "struct",
+                "fields": [
+                    {
+                        "name": "id",
+                        "docs": ["Unique proposal ID"],
+                        "type": "u64"
+                    },
+                    {
+                        "name": "proposal_type",
+                        "docs": ["Type of proposal"],
+                        "type": {
+                            "defined": {
+                                "name": "ProposalType"
+                            }
+                        }
+                    },
+                    {
+                        "name": "signatures",
+                        "docs": ["Signatures collected"],
+                        "type": {
+                            "vec": "pubkey"
+                        }
+                    },
+                    {
+                        "name": "eta",
+                        "docs": ["Execution time (timelock)"],
+                        "type": "u64"
+                    },
+                    {
+                        "name": "executed",
+                        "docs": ["Whether executed"],
+                        "type": "bool"
+                    },
+                    {
+                        "name": "data",
+                        "docs": ["Proposal data (if needed)"],
+                        "type": "bytes"
+                    }
+                ]
+            }
+        },
+        {
+            "name": "ProposalType",
+            "docs": ["Types of multisig proposals"],
+            "type": {
+                "kind": "enum",
+                "variants": [
+                    {
+                        "name": "Pause"
+                    },
+                    {
+                        "name": "Unpause"
+                    },
+                    {
+                        "name": "EmergencyWithdraw"
+                    }
+                ]
+            }
+        },
+        {
+            "name": "RevenueDeposited",
+            "type": {
+                "kind": "struct",
+                "fields": [
+                    {
+                        "name": "depositor",
+                        "type": "pubkey"
+                    },
+                    {
+                        "name": "amount",
+                        "type": "u64"
+                    },
+                    {
+                        "name": "new_acc_per_share",
+                        "type": "u128"
+                    }
+                ]
+            }
+        },
+        {
+            "name": "RewardsClaimed",
+            "type": {
+                "kind": "struct",
+                "fields": [
+                    {
+                        "name": "user",
+                        "type": "pubkey"
+                    },
+                    {
+                        "name": "amount",
+                        "type": "u64"
+                    }
+                ]
+            }
+        },
+        {
+            "name": "StabilityConfig",
+            "type": {
+                "kind": "struct",
+                "fields": [
+                    {
+                        "name": "price_oracle",
+                        "docs": ["Oracle de precio objetivo (ej: USD)"],
+                        "type": "pubkey"
+                    },
+                    {
+                        "name": "last_price",
+                        "docs": ["Último precio registrado"],
+                        "type": "u64"
+                    },
+                    {
+                        "name": "adjustment_threshold",
+                        "docs": ["Umbral de ajuste (basis points)"],
+                        "type": "u16"
+                    }
+                ]
+            }
+        },
+        {
+            "name": "State",
+            "docs": ["Main contract state with accumulator pattern"],
+            "type": {
+                "kind": "struct",
+                "fields": [
+                    {
+                        "name": "total_shares",
+                        "docs": ["Total shares in the system"],
+                        "type": "u64"
+                    },
+                    {
+                        "name": "acc_reward_per_share",
+                        "docs": [
+                            "Accumulated reward per share (scaled by PRECISION)"
+                        ],
+                        "type": "u128"
+                    },
+                    {
+                        "name": "vault_bump",
+                        "docs": ["Vault PDA bump seed"],
+                        "type": "u8"
+                    },
+                    {
+                        "name": "is_paused",
+                        "docs": ["Contract pause state"],
+                        "type": "bool"
+                    },
+                    {
+                        "name": "emergency_mode",
+                        "docs": ["Emergency mode flag"],
+                        "type": "bool"
+                    },
+                    {
+                        "name": "last_update_slot",
+                        "docs": ["Last update slot for tracking"],
+                        "type": "u64"
+                    },
+                    {
+                        "name": "authority",
+                        "docs": ["Authority for admin actions"],
+                        "type": "pubkey"
+                    }
+                ]
+            }
+        },
+        {
+            "name": "User",
+            "docs": ["User account for revenue sharing"],
+            "type": {
+                "kind": "struct",
+                "fields": [
+                    {
+                        "name": "owner",
+                        "docs": ["Owner of this user account"],
+                        "type": "pubkey"
+                    },
+                    {
+                        "name": "shares",
+                        "docs": ["Number of shares owned by user"],
+                        "type": "u64"
+                    },
+                    {
+                        "name": "reward_debt",
+                        "docs": ["Reward debt (prevents retroactive claims)"],
+                        "type": "u64"
+                    },
+                    {
+                        "name": "last_claim_slot",
+                        "docs": ["Last claim slot for tracking"],
+                        "type": "u64"
+                    }
+                ]
+            }
+        },
+        {
+            "name": "UserRegistered",
+            "type": {
+                "kind": "struct",
+                "fields": [
+                    {
+                        "name": "user",
+                        "type": "pubkey"
+                    },
+                    {
+                        "name": "shares",
+                        "type": "u64"
+                    }
+                ]
+            }
+        },
+        {
+            "name": "UserSharesUpdated",
+            "type": {
+                "kind": "struct",
+                "fields": [
+                    {
+                        "name": "user",
+                        "type": "pubkey"
+                    },
+                    {
+                        "name": "old_shares",
+                        "type": "u64"
+                    },
+                    {
+                        "name": "new_shares",
+                        "type": "u64"
+                    }
+                ]
+            }
+        },
+        {
+            "name": "VirginConfig",
+            "type": {
+                "kind": "struct",
+                "fields": [
+                    {
+                        "name": "factory",
+                        "docs": ["Fábrica autorizada para crear este token"],
+                        "type": "pubkey"
+                    },
+                    {
+                        "name": "service_id",
+                        "docs": ["ID único del servicio"],
+                        "type": {
+                            "array": ["u8", 32]
+                        }
+                    },
+                    {
+                        "name": "mint",
+                        "docs": ["Mint del token virgin"],
+                        "type": "pubkey"
+                    },
+                    {
+                        "name": "cap",
+                        "docs": ["Cap máximo de suministro"],
+                        "type": "u64"
+                    },
+                    {
+                        "name": "decimals",
+                        "docs": ["Decimales del token"],
+                        "type": "u8"
+                    },
+                    {
+                        "name": "transferable",
+                        "docs": ["Si el token puede transferirse"],
+                        "type": "bool"
+                    },
+                    {
+                        "name": "metadata_uri",
+                        "docs": ["Metadata URI (compatible con Metaplex)"],
+                        "type": "string"
+                    },
+                    {
+                        "name": "bump",
+                        "docs": ["Bump seed para PDA"],
+                        "type": "u8"
+                    },
+                    {
+                        "name": "issuer",
+                        "docs": ["Emisor autorizado"],
+                        "type": "pubkey"
+                    },
+                    {
+                        "name": "mint_config",
+                        "docs": ["Configuración de mint"],
+                        "type": {
+                            "defined": {
+                                "name": "VirginMintConfig"
+                            }
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "name": "VirginConfigCreated",
+            "type": {
+                "kind": "struct",
+                "fields": [
+                    {
+                        "name": "service_id",
+                        "type": {
+                            "array": ["u8", 32]
+                        }
+                    },
+                    {
+                        "name": "mint",
+                        "type": "pubkey"
+                    }
+                ]
+            }
+        },
+        {
+            "name": "VirginMintConfig",
+            "type": {
+                "kind": "struct",
+                "fields": [
+                    {
+                        "name": "min_mint",
+                        "docs": ["Mínimo por mint"],
+                        "type": "u64"
+                    },
+                    {
+                        "name": "max_mint",
+                        "docs": ["Máximo por mint"],
+                        "type": "u64"
+                    },
+                    {
+                        "name": "mint_cooldown",
+                        "docs": ["Cooldown entre mints (slots)"],
+                        "type": "u64"
+                    },
+                    {
+                        "name": "requires_kyc",
+                        "docs": ["Si requiere KYC"],
+                        "type": "bool"
+                    }
+                ]
+            }
+        },
+        {
+            "name": "VirginMinted",
+            "type": {
+                "kind": "struct",
+                "fields": [
+                    {
+                        "name": "mint",
+                        "type": "pubkey"
+                    },
+                    {
+                        "name": "to",
+                        "type": "pubkey"
+                    },
+                    {
+                        "name": "amount",
+                        "type": "u64"
+                    }
+                ]
+            }
+        },
+        {
+            "name": "WalletWhitelisted",
+            "type": {
+                "kind": "struct",
+                "fields": [
+                    {
+                        "name": "wallet",
+                        "type": "pubkey"
+                    }
+                ]
+            }
+        }
+    ]
+}

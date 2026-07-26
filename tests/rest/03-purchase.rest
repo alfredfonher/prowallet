@@ -1,0 +1,147 @@
+### ============================================================================
+### PURCHASE ENDPOINTS
+### ============================================================================
+### Manejo de compras de tokens GAPC
+
+@api = https://servicioshilda.orioncaribe.com/api/v1
+@accessToken = your_jwt_token_here
+
+### ============================================================================
+### 1. GET /purchase/price - Get Current Token Price
+### ============================================================================
+### Obtiene el precio actual del token GAPC
+### NO requiere autenticación
+
+GET {{@api}}/purchase/price
+
+### Response should be 200 OK with:
+### {
+###   "success": true,
+###   "price": 0.15,
+###   "currency": "usd",
+###   "source": "coingecko",
+###   "timestamp": "2024-01-01T12:00:00Z"
+### }
+
+
+### ============================================================================
+### 2. POST /purchase/initiate - Initiate Purchase
+### ============================================================================
+### Inicia una nueva compra de tokens
+### Pasos:
+### 1. Llamar este endpoint con cantidad SOL
+### 2. Obtener transactionBase64 para firmar
+### 3. Firmar con wallet
+### 4. Confirmar compra
+
+POST {{@api}}/purchase/initiate
+Content-Type: application/json
+Authorization: Bearer {{@accessToken}}
+
+{
+  "walletAddress": "4Nd1m1Q5WJGj5CqPKYrZL2g4X2Y8Z3A4B5C6D7E8",
+  "paymentMethodId": "solana",
+  "solAmount": 0.5,
+  "slippageTolerance": 0.05
+}
+
+### Response should be 200 OK with:
+### {
+###   "success": true,
+###   "transactionId": "tx_12345",
+###   "transactionBase64": "AQAAA...",
+###   "estimatedTokens": 3.33,
+###   "totalCost": 0.5
+### }
+
+
+### ============================================================================
+### 3. POST /purchase/confirm/:transactionId - Confirm Purchase
+### ============================================================================
+### Confirma una compra después de firmarla
+### :transactionId = ID retornado por /initiate
+
+POST {{@api}}/purchase/confirm/tx_12345
+Content-Type: application/json
+
+{
+  "walletAddress": "4Nd1m1Q5WJGj5CqPKYrZL2g4X2Y8Z3A4B5C6D7E8",
+  "transactionHash": "5K1fvW2xY3zZ4aA5bB6cC7dD8eE9fF0gG1hH2iI3jJ4kK5lL6mM7nN8oO9pP0qQ1rR2sS3tT4uU5vV6wW7xX8yY9zZ",
+  "signature": "5K1fvW2xY3zZ4aA5bB6cC7dD8eE9fF0gG1hH2iI3jJ4kK5lL6mM7nN8oO9pP0qQ1rR2sS3tT4uU5vV6wW7xX8yY9zZ"
+}
+
+### Response should be 200 OK with:
+### {
+###   "success": true,
+###   "message": "Compra confirmada",
+###   "tokensMinted": 3.33,
+###   "transactionHash": "..."
+### }
+
+
+### ============================================================================
+### 4. GET /purchase/status/:transactionId - Check Purchase Status
+### ============================================================================
+### Verifica el estado de una compra en progreso
+
+GET {{@api}}/purchase/status/tx_12345
+
+### Response should be 200 OK with:
+### {
+###   "success": true,
+###   "status": "confirmed",
+###   "tokens": 3.33,
+###   "timestamp": "2024-01-01T12:00:00Z"
+### }
+
+
+### ============================================================================
+### 5. GET /purchase/history/:walletAddress - Get Purchase History
+### ============================================================================
+### Obtiene histórico de compras de un wallet
+### :walletAddress = Dirección Solana
+
+GET {{@api}}/purchase/history/4Nd1m1Q5WJGj5CqPKYrZL2g4X2Y8Z3A4B5C6D7E8
+
+### Response should be 200 OK with array of transactions
+
+
+### ============================================================================
+### 6. GET /purchase/payment-methods - Get Available Payment Methods
+### ============================================================================
+### Lista métodos de pago disponibles
+
+GET {{@api}}/purchase/payment-methods
+
+### Response should be 200 OK with:
+### {
+###   "success": true,
+###   "methods": [
+###     {
+###       "id": "solana",
+###       "name": "Solana",
+###       "symbol": "SOL",
+###       "icon": "..."
+###     },
+###     ...
+###   ]
+### }
+
+
+### ============================================================================
+### 7. GET /purchase/market-stats - Get Market Statistics
+### ============================================================================
+### Obtiene estadísticas del mercado
+
+GET {{@api}}/purchase/market-stats
+
+### Response should be 200 OK with:
+### {
+###   "success": true,
+###   "totalTokensMinted": 1000000,
+###   "totalSolRaised": 5000,
+###   "currentPrice": 0.15,
+###   "holders": 1500,
+###   "bonding_curve_stage": 2
+### }
+

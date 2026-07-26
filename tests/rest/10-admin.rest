@@ -1,0 +1,118 @@
+### ============================================================================
+### ADMIN & METADATA ENDPOINTS
+### ============================================================================
+### Endpoints administrativos y metadatos
+
+@api = https://servicioshilda.orioncaribe.com/api/v1
+@adminToken = your_admin_jwt_token_here
+
+### ============================================================================
+### 1. GET /admin/metadata/api - API Metadata
+### ============================================================================
+### Obtiene información de la API (versión, endpoints, etc.)
+
+GET {{@api}}/admin/metadata/api
+
+### Response should be 200 OK with:
+### {
+###   "success": true,
+###   "version": "1.0.0",
+###   "name": "ProWallet API",
+###   "environment": "production",
+###   "uptime": 3600,
+###   "endpoints": [...]
+### }
+
+
+### ============================================================================
+### 2. GET /admin/metadata/endpoints - Endpoints List
+### ============================================================================
+### Lista de todos los endpoints disponibles
+
+GET {{@api}}/admin/metadata/endpoints
+
+### Response should be 200 OK with complete endpoints list
+
+
+### ============================================================================
+### 3. GET /admin/metadata/contract - Contract Metadata
+### ============================================================================
+### Metadatos del contrato inteligente
+
+GET {{@api}}/admin/metadata/contract
+
+### Response should be 200 OK with contract information
+
+
+### ============================================================================
+### 4. GET /admin/stats - Global Statistics
+### ============================================================================
+### Estadísticas globales del sistema (solo admins)
+
+GET {{@api}}/admin/stats
+Authorization: Bearer {{@adminToken}}
+
+### Response should be 200 OK with:
+### {
+###   "success": true,
+###   "totalUsers": 1500,
+###   "totalTransactions": 8000,
+###   "totalVolume": "5000 SOL",
+###   "activeWallets": 1200
+### }
+
+
+### ============================================================================
+### 5. GET /admin/system-health - System Health
+### ============================================================================
+### Verificación de salud del sistema completo
+
+GET {{@api}}/admin/system-health
+Authorization: Bearer {{@adminToken}}
+
+### Response should be 200 OK with system status
+
+
+### ============================================================================
+### 6. POST /admin/maintenance-mode - Enable/Disable Maintenance Mode
+### ============================================================================
+### Activa o desactiva modo de mantenimiento
+
+POST {{@api}}/admin/maintenance-mode
+Authorization: Bearer {{@adminToken}}
+Content-Type: application/json
+
+{
+  "enabled": true,
+  "message": "API under maintenance. Please try again later.",
+  "estimatedDuration": "1 hour"
+}
+
+### Response should be 200 OK
+
+
+### ============================================================================
+### 7. GET /admin/logs - Get System Logs
+### ============================================================================
+### Obtiene logs del sistema (solo admins)
+
+GET {{@api}}/admin/logs?limit=100&level=error
+Authorization: Bearer {{@adminToken}}
+
+### Response should be 200 OK with logs
+
+
+### ============================================================================
+### 8. POST /admin/cache/clear - Clear Cache
+### ============================================================================
+### Limpia la caché del sistema
+
+POST {{@api}}/admin/cache/clear
+Authorization: Bearer {{@adminToken}}
+Content-Type: application/json
+
+{
+  "type": "all"
+}
+
+### Response should be 200 OK

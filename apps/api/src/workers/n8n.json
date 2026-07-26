@@ -1,0 +1,161 @@
+{
+    "name": "ProWallet - Price Updater (CryptoRank -> API Redis cache)",
+    "nodes": [
+        {
+            "parameters": {
+                "cronExpression": "*/1 * * * *",
+                "options": {}
+            },
+            "name": "Cron",
+            "type": "n8n-nodes-base.cron",
+            "typeVersion": 1,
+            "position": [250, 250]
+        },
+        {
+            "parameters": {
+                "url": "https://api.cryptorank.io/v2/currencies/5663",
+                "options": {},
+                "responseFormat": "json",
+                "jsonParameters": false,
+                "additionalHeaders": {
+                    "headerParameters": [
+                        {
+                            "name": "X-API-Key",
+                            "value": "d13b1cd817ed8c58c2fd71aa368cbcea82ae8896a19b9a569f8a5fdd469d"
+                        },
+                        {
+                            "name": "Authorization",
+                            "value": "Bearer d13b1cd817ed8c58c2fd71aa368cbcea82ae8896a19b9a569f8a5fdd469d"
+                        },
+                        {
+                            "name": "Accept",
+                            "value": "application/json"
+                        }
+                    ]
+                }
+            },
+            "name": "Get CryptoRank SOL",
+            "type": "n8n-nodes-base.httpRequest",
+            "typeVersion": 2,
+            "position": [450, 160]
+        },
+        {
+            "parameters": {
+                "values": {
+                    "boolean": [],
+                    "number": [],
+                    "string": [
+                        {
+                            "name": "solPriceUsd",
+                            "value": "={{ $json['data'] && $json['data']['priceUsd'] ? Number($json['data']['priceUsd']) : ( $json['priceUsd'] || null ) }}",
+                            "valueType": "expression"
+                        },
+                        {
+                            "name": "source",
+                            "value": "cryptorank",
+                            "valueType": "string"
+                        },
+                        {
+                            "name": "timestamp",
+                            "value": "={{ Date.now() }}",
+                            "valueType": "expression"
+                        }
+                    ]
+                },
+                "options": {}
+            },
+            "name": "Prepare Payload",
+            "type": "n8n-nodes-base.set",
+            "typeVersion": 1,
+            "position": [650, 160]
+        },
+        {
+            "parameters": {
+                "url": "http://host.docker.internal:3001/api/v1/exchange/cachePrice",
+                "method": "POST",
+                "jsonParameters": true,
+                "options": {},
+                "bodyParametersJson": "={{ { \"solPriceUsd\": $json.solPriceUsd, \"source\": $json.source, \"timestamp\": Number($json.timestamp) } }}",
+                "headerParametersJson": "={{ { \"Content-Type\": \"application/json\", \"x-updater-key\": $credentials.priceUpdaterKey.key } }}"
+            },
+            "name": "POST to API CachePrice",
+            "type": "n8n-nodes-base.httpRequest",
+            "typeVersion": 2,
+            "position": [900, 160]
+        },
+        {
+            "parameters": {
+                "conditions": {
+                    "boolean": [],
+                    "number": [],
+                    "string": [
+                        {
+                            "value1": "={{$json[\"statusCode\"]}}",
+                            "operation": "notEqual",
+                            "value2": 200
+                        }
+                    ]
+                }
+            },
+            "name": "Is Error?",
+            "type": "n8n-nodes-base.if",
+            "typeVersion": 1,
+            "position": [1100, 160]
+        }
+    ],
+    "connections": {
+        "Cron": {
+            "main": [
+                [
+                    {
+                        "node": "Get CryptoRank SOL",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Get CryptoRank SOL": {
+            "main": [
+                [
+                    {
+                        "node": "Prepare Payload",
+                        "type": "main",
+                        "index": 0
+                    }
+                ],
+                [
+                    {
+                        "node": "Prepare Payload",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Prepare Payload": {
+            "main": [
+                [
+                    {
+                        "node": "POST to API CachePrice",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "POST to API CachePrice": {
+            "main": [
+                [
+                    {
+                        "node": "Is Error?",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        }
+    },
+    "active": false,
+    "settings": {}
+}

@@ -1,0 +1,128 @@
+### ============================================================================
+### AUTHENTICATION ENDPOINTS
+### ============================================================================
+### Gestión de usuarios y autenticación
+
+@api = https://servicioshilda.orioncaribe.com/api/v1
+
+### ============================================================================
+### 1. POST /auth/register - Register New User
+### ============================================================================
+### Registra un nuevo usuario con credenciales tradicionales
+
+POST {{@api}}/auth/register
+Content-Type: application/json
+
+{
+  "username": "testuser123",
+  "password": "TestPassword123!",
+  "email": "test@example.com"
+}
+
+### Response should be 201 Created with JWT token
+
+
+### ============================================================================
+### 2. POST /auth/login - Login with Credentials
+### ============================================================================
+### Login con username y password
+
+POST {{@api}}/auth/login
+Content-Type: application/json
+
+{
+  "username": "testuser123",
+  "password": "TestPassword123!"
+}
+
+### Response should be 200 OK with accessToken and refreshToken
+
+
+### ============================================================================
+### 3. POST /auth/login-wallet - Login with Solana Wallet Signature
+### ============================================================================
+### Login usando firma digital de Solana Wallet
+### Pasos requeridos:
+### 1. Obtener challenge
+### 2. Firmar challenge con wallet privada
+### 3. Enviar signature
+
+POST {{@api}}/auth/login-wallet
+Content-Type: application/json
+
+{
+  "publicKey": "4Nd1m1Q5WJGj5CqPKYrZL2g4X2Y8Z3A4B5C6D7E8",
+  "message": "login-nonce-123456",
+  "signature": "5K1fvW2xY3zZ4aA5bB6cC7dD8eE9fF0gG1hH2iI3jJ4kK5lL6mM7nN8oO9pP0qQ1rR2sS3tT4uU5vV6wW7xX8yY9zZ"
+}
+
+### Response should be 200 OK with accessToken
+
+
+### ============================================================================
+### 4. GET /auth/challenge/:publicKey - Get Login Challenge
+### ============================================================================
+### Obtiene un challenge para firmar antes del login
+
+GET {{@api}}/auth/challenge/4Nd1m1Q5WJGj5CqPKYrZL2g4X2Y8Z3A4B5C6D7E8
+
+### Response should be 200 OK with challenge string and nonce
+
+
+### ============================================================================
+### 5. GET /auth/me - Get Current User Info
+### ============================================================================
+### Obtiene información del usuario autenticado
+### Requiere: JWT accessToken en Authorization header
+
+GET {{@api}}/auth/me
+Authorization: Bearer {{@accessToken}}
+
+### Response should be 200 OK with user data
+
+
+### ============================================================================
+### 6. POST /auth/logout - Logout
+### ============================================================================
+### Cierra sesión y invalida el token
+
+POST {{@api}}/auth/logout
+Authorization: Bearer {{@accessToken}}
+Content-Type: application/json
+
+{
+  "refreshToken": "{{@refreshToken}}"
+}
+
+### Response should be 200 OK
+
+
+### ============================================================================
+### 7. POST /auth/refresh - Refresh Token
+### ============================================================================
+### Genera un nuevo accessToken usando refreshToken
+
+POST {{@api}}/auth/refresh
+Content-Type: application/json
+
+{
+  "refreshToken": "{{@refreshToken}}"
+}
+
+### Response should be 200 OK with new accessToken
+
+
+### ============================================================================
+### 8. POST /auth/verify - Verify Token
+### ============================================================================
+### Verifica que un token JWT es válido
+
+POST {{@api}}/auth/verify
+Content-Type: application/json
+
+{
+  "token": "{{@accessToken}}"
+}
+
+### Response should be 200 OK if valid, 401 Unauthorized if invalid
+

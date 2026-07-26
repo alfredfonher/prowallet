@@ -1,0 +1,41 @@
+sequenceDiagram
+    participant User as Usuario
+    participant Web as Web (Next.js)
+    participant API as Backend (Express)
+    participant DB as Base de Datos
+    participant Solana as Blockchain Solana
+
+    User->>Web: Realiza compra
+    Web->>+API: POST /purchase/initiate (token amount)
+    API-->>-Web: 200 { signature, transactionId }
+    Web->>Solana: Envía transacción firmada
+
+    Web->>+API: POST /purchase/confirm/:transactionId
+    API->>DB: Ejecuta mint del token
+    Solana-->>API: Mint signature
+    API->>DB: Marca status="completed" (inmediato)
+    API-->>-Web: 200 { status: "completed" }
+    
+    Note over Web,User: Respuesta inmediata (~100ms)
+    Web->>User: Muestra: "Compra procesada"
+
+    par Background Task
+        API->>API: waitForMintConfirmationAndMarkSuccess()
+        Note over API: Espera hasta 2 minutos
+        API->>Solana: Verifica confirmación del mint
+        loop Reintentos (max 15)
+            Solana-->>API: ¿Confirmado?
+        end
+        Solana-->>API: ✅ Confirmado
+        API->>DB: Marca status="success"
+        Note over DB: Balance se refleja aquí
+    and User UI
+        User->>Web: Sigue esperando...
+        Web->>API: Poll status cada 2s
+        API-->>Web: { status: "completed" }
+        Web->>Web: Espera confirmación
+    end
+
+    Web->>API: Poll status
+    API-->>Web: { status: "success" }
+    Web->>User: ✅ Balance actualizado

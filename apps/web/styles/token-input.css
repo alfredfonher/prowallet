@@ -1,0 +1,90 @@
+/* Token Input Formatter Styles */
+
+/* Remove number input spinner/increment buttons - Webkit browsers */
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+input[type="text"]::-webkit-outer-spin-button,
+input[type="text"]::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+/* Firefox */
+input[type="number"] {
+    -moz-appearance: textfield;
+}
+
+input[type="text"] {
+    -moz-appearance: textfield;
+}
+
+/* Right-to-left text direction for token input */
+.direction-rtl {
+    direction: rtl;
+    unicode-bidi: bidi-override;
+}
+
+.direction-rtl::placeholder {
+    direction: ltr;
+    unicode-bidi: bidi-override;
+}
+
+/* Ensure placeholder text is properly aligned */
+.direction-rtl::-webkit-input-placeholder {
+    direction: ltr;
+}
+
+.direction-rtl:-moz-placeholder {
+    direction: ltr;
+}
+
+.direction-rtl::-moz-placeholder {
+    direction: ltr;
+}
+
+.direction-rtl:-ms-input-placeholder {
+    direction: ltr;
+}
+
+/* Smooth transitions for validation states */
+.direction-rtl {
+    transition:
+        border-color 0.2s,
+        box-shadow 0.2s;
+}
+
+/* Focus ring adjustments for RTL */
+.direction-rtl:focus {
+    outline: none;
+    box-shadow: inset 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.direction-rtl:focus:invalid {
+    box-shadow: inset 0 0 0 3px rgba(239, 68, 68, 0.1);
+}
+
+.direction-rtl:focus:valid {
+    box-shadow: inset 0 0 0 3px rgba(34, 197, 94, 0.1);
+}
+
+/* Disabled state */
+.direction-rtl:disabled {
+    background-color: #f3f4f6;
+    cursor: not-allowed;
+    opacity: 0.5;
+}
+
+/* Selection styling */
+.direction-rtl::selection {
+    background-color: #93c5fd;
+    color: #1e3a8a;
+}
+
+.direction-rtl::-moz-selection {
+    background-color: #93c5fd;
+    color: #1e3a8a;
+}

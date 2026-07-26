@@ -1,0 +1,113 @@
+### 📄 PURCHASE - Estado de Transacción
+### GET /api/v1/purchase/status/:transactionId
+### Obtiene el estado actual de una transacción
+### Documentación: Monitoreo en tiempo real de compras
+
+@baseUrl = https://servicioshilda.orioncaribe.com/api/v1
+
+### ⚠️ FLUJO CORRECTO:
+### 1. Ejecuta 02-POST-initiate.rest
+### 2. Copia el "transactionId" de la respuesta
+### 3. Reemplaza el valor de @transactionId abajo
+### 4. Ejecuta este request para ver el estado
+
+@transactionId = 550e8400-e29b-41d4-a716-446655440000
+
+###
+# Obtener estado de una transacción
+# Reemplaza 550e8400-e29b-41d4-a716-446655440000 con tu transactionId real
+GET {{baseUrl}}/purchase/status/{{transactionId}}
+Accept: application/json
+
+###
+# RESPUESTA ESPERADA (200 OK) - Pendiente:
+# {
+#   "success": true,
+#   "code": 200,
+#   "message": "OK",
+#   "data": {
+#     "transactionId": "123e4567-e89b-12d3-a456-426614174000",
+#     "status": "pending",
+#     "paymentStatus": "pending",
+#     "tokenAmount": 100,
+#     "paymentAmount": 0.005,
+#     "paymentCurrency": "SOL",
+#     "processor": "solana",
+#     "processorPaymentId": "123e4567-e89b-12d3-a456-426614174000",
+#     "completedAt": null,
+#     "verification": null,
+#     "minted": false,
+#     "minting": false,
+#     "mintSignature": null,
+#     "mintStartedAt": null
+#   }
+# }
+
+###
+# RESPUESTA ESPERADA (200 OK) - Confirmada:
+# {
+#   "success": true,
+#   "code": 200,
+#   "message": "OK",
+#   "data": {
+#     "transactionId": "123e4567-e89b-12d3-a456-426614174000",
+#     "status": "success",
+#     "paymentStatus": "success",
+#     "tokenAmount": 100,
+#     "paymentAmount": 0.005,
+#     "paymentCurrency": "SOL",
+#     "processor": "solana",
+#     "processorPaymentId": "123e4567-e89b-12d3-a456-426614174000",
+#     "completedAt": "2024-12-07T10:30:45Z",
+#     "verification": null,
+#     "minted": true,
+#     "minting": false,
+#     "mintSignature": "4UVJ9k7c9V8K2m5X9p2N3Q4R5S6T7U8V9W0X1Y2Z3a4b5c6d7e8f9g0h1i2j3k4l5m6n7o8p9q",
+#     "mintStartedAt": "2024-12-07T10:30:30Z"
+#   }
+# }
+
+###
+# RESPUESTA ESPERADA (200 OK) - Fallida:
+# {
+#   "success": true,
+#   "code": 200,
+#   "message": "OK",
+#   "data": {
+#     "transactionId": "123e4567-e89b-12d3-a456-426614174000",
+#     "status": "failed",
+#     "paymentStatus": "failed",
+#     "tokenAmount": 100,
+#     "paymentAmount": 0.005,
+#     "paymentCurrency": "SOL",
+#     "processor": "solana",
+#     "processorPaymentId": "123e4567-e89b-12d3-a456-426614174000",
+#     "completedAt": null,
+#     "verification": null,
+#     "minted": false,
+#     "minting": false,
+#     "mintSignature": null,
+#     "mintStartedAt": null
+#   }
+# }
+
+###
+# ESTADOS POSIBLES:
+# - pending: Esperando confirmación en blockchain
+# - success: Transacción completada exitosamente
+# - failed: Transacción falló
+# - processing: Procesando en blockchain
+# - cancelled: Transacción cancelada por el usuario
+
+###
+# MINTING STATUS:
+# - minted: Tokens ya han sido acuñados (true/false)
+# - minting: En proceso de acuñación (true/false)
+# - mintSignature: Firma de la transacción de acuñación
+# - mintStartedAt: Cuándo comenzó el minting
+
+###
+# ERRORES POSIBLES:
+# 404: Transaction ID no encontrada
+# 429: Rate limit excedido
+# 500: Error interno del servidor

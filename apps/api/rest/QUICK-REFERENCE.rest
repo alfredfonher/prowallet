@@ -1,0 +1,204 @@
+### 📋 REFERENCIA RÁPIDA - Endpoints ProWallet API
+
+## ⚡ Instalación Rápida de REST Client
+
+1. Abre VS Code
+2. Ve a Extensions (Ctrl+Shift+X)
+3. Busca "REST Client"
+4. Instala `ms-vscode.vscode-rest-client`
+5. Abre cualquier archivo `.rest` en esta carpeta
+6. Haz clic en "Send Request"
+
+---
+
+## 🎯 Endpoints Resumidos
+
+| Archivo | Método | Endpoint | Descripción |
+|---------|--------|----------|-------------|
+| 01 | GET | `/purchase/price` | Obtener precio actual |
+| 02 | POST | `/purchase/initiate` | Iniciar compra |
+| 03 | POST | `/purchase/confirm/:id` | Confirmar compra |
+| 04 | GET | `/purchase/history/:wallet` | Ver historial |
+| 05 | GET | `/purchase/market-stats` | Estadísticas mercado |
+| 06 | GET | `/purchase/payment-methods` | Métodos de pago |
+| 07 | GET | `/purchase/status/:id` | Ver estado transacción |
+| 08 | GET | `/purchase/top-10` | Top 10 criptos |
+| 09 | GET | `/purchase/price-history/:tf` | Historial de precios |
+
+---
+
+## 🔗 Base URL
+
+```
+https://servicioshilda.orioncaribe.com/api/v1
+```
+
+---
+
+## 🚀 Flujo Típico de Compra
+
+### 1. Obtener Precio
+```
+GET /purchase/price?amount=100
+```
+Respuesta: `pricePerToken`, `totalCost`, `gasCost`
+
+### 2. Iniciar Compra
+```
+POST /purchase/initiate
+Body: {
+  "walletAddress": "...",
+  "tokenAmount": 100,
+  "paymentMethod": "SOL"
+}
+```
+Respuesta: `transactionId`, `txBase64`
+
+### 3. Firmar (en wallet)
+Usuario firma la transacción en su wallet
+
+### 4. Confirmar Compra
+```
+POST /purchase/confirm/:transactionId
+Body: {
+  "signature": "..."
+}
+```
+Respuesta: `status: "completed"`
+
+### 5. Ver Historial
+```
+GET /purchase/history/:walletAddress
+```
+Respuesta: Lista de todas las compras
+
+---
+
+## 💾 Variables Clave
+
+Edita en `00-VARIABLES.rest`:
+
+```rest
+@baseUrl = https://servicioshilda.orioncaribe.com/api/v1
+@walletAddress = 11111111111111111111111111111111
+@tokenAmount = 100
+@paymentMethod = SOL
+@transactionId = 123e4567-e89b-12d3-a456-426614174000
+@signature = 4UVJ9k7c9V8K2m5X9p2N3Q4R5S6T7U8...
+```
+
+---
+
+## 📊 Métodos de Pago
+
+```
+- SOL              ← Recomendado (más rápido)
+- USDC             ← Token estable
+- stripe           ← Tarjeta de crédito
+- coingate         ← Crypto alternativa
+- nowpayments      ← Crypto múltiple
+```
+
+---
+
+## 🔍 Filtros Disponibles
+
+### Historial (/history)
+```
+?status=completed              # pending, completed, failed
+?paymentMethod=SOL             # SOL, USDC, stripe, etc.
+?sort=date_desc                # date_asc, date_desc, amount_asc, amount_desc
+?startDate=2024-01-01
+?endDate=2024-12-07
+?limit=20&offset=0             # Paginación
+```
+
+### Historial de Precios (/price-history)
+```
+/price-history/1h              # Últimas 24h (por hora)
+/price-history/1d              # Últimos 7 días (por día)
+/price-history/7d              # Últimos 30 días (por día)
+/price-history/30d             # Últimos 90 días (por día)
+/price-history/1y              # Último año (por semana)
+```
+
+---
+
+## 📝 Estructura de Respuesta
+
+### Éxito (200)
+```json
+{
+  "success": true,
+  "code": 200,
+  "message": "Descripción",
+  "data": { /* datos */ }
+}
+```
+
+### Error (400, 500, etc.)
+```json
+{
+  "success": false,
+  "code": 400,
+  "message": "Descripción del error",
+  "errors": [ /* detalles */ ]
+}
+```
+
+---
+
+## 🆚 Comparar con Legacy
+
+- ✅ 100% compatible con endpoints
+- ✅ Mejores tiempos de respuesta
+- ✅ Mejor manejo de errores
+- ✅ Reintento automático de RPC
+- ✅ Validación on-chain mejorada
+
+---
+
+## 🐛 Troubleshooting
+
+### "Connection Refused"
+```bash
+# Verifica que API está corriendo
+curl https://servicioshilda.orioncaribe.com/
+```
+
+### "Rate Limited (429)"
+```
+Espera unos segundos o edita rate limit en .env
+```
+
+### "Invalid Wallet"
+```
+Usa formato válido Solana (base58, 44 caracteres)
+```
+
+### "Transaction Not Found"
+```
+Verifica que el transactionId existe y no expiró
+```
+
+---
+
+## 💡 Tips
+
+1. **Copia respuesta anterior**: Haz clic en el JSON de respuesta
+2. **Múltiples requests**: Separa con `###`
+3. **Variables dinámicas**: Usa `{{variable}}`
+4. **Guardare valores**: Haz clic en "Remember"
+5. **Historial**: Panel "Timeline" lado derecho
+
+---
+
+## 📚 Más Información
+
+- README.md: Guía completa
+- Swagger: https://servicioshilda.orioncaribe.com/api/docs
+- Docs: Ver carpeta `documentation/`
+
+---
+
+**Última actualización:** 7 Diciembre 2025

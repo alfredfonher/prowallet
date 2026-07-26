@@ -1,0 +1,143 @@
+### ============================================================================
+### SOLANA PROXY ENDPOINTS
+### ============================================================================
+### Acceso directo a métodos de Solana RPC
+
+@api = https://servicioshilda.orioncaribe.com/api/v1
+
+### ============================================================================
+### 1. POST /solana/rpc - Solana RPC Proxy
+### ============================================================================
+### Proxy directo a Solana RPC methods
+### Ver: https://docs.solana.com/api/http
+
+POST {{@api}}/solana/rpc
+Content-Type: application/json
+
+{
+  "jsonrpc": "2.0",
+  "id": 1,
+  "method": "getBalance",
+  "params": ["4Nd1m1Q5WJGj5CqPKYrZL2g4X2Y8Z3A4B5C6D7E8"]
+}
+
+### Response should be 200 OK with RPC response
+
+
+### ============================================================================
+### 2. POST /solana/rpc - Get Slot
+### ============================================================================
+
+POST {{@api}}/solana/rpc
+Content-Type: application/json
+
+{
+  "jsonrpc": "2.0",
+  "id": 1,
+  "method": "getSlot"
+}
+
+
+### ============================================================================
+### 3. POST /solana/rpc - Get Token Account Balance
+### ============================================================================
+
+POST {{@api}}/solana/rpc
+Content-Type: application/json
+
+{
+  "jsonrpc": "2.0",
+  "id": 1,
+  "method": "getTokenAccountBalance",
+  "params": ["DuVzGwE9waTmPHjsto3brPbFZaqMjW5AnDQEA1mK1ZZN"]
+}
+
+
+### ============================================================================
+### 4. POST /solana/rpc - Get Transaction
+### ============================================================================
+
+POST {{@api}}/solana/rpc
+Content-Type: application/json
+
+{
+  "jsonrpc": "2.0",
+  "id": 1,
+  "method": "getTransaction",
+  "params": [
+    "5K1fvW2xY3zZ4aA5bB6cC7dD8eE9fF0gG1hH2iI3jJ4kK5lL6mM7nN8oO9pP0qQ1rR2sS3tT4uU5vV6wW7xX8yY9zZ",
+    { "encoding": "json" }
+  ]
+}
+
+
+### ============================================================================
+### 5. POST /solana/rpc - Get Signature Statuses
+### ============================================================================
+
+POST {{@api}}/solana/rpc
+Content-Type: application/json
+
+{
+  "jsonrpc": "2.0",
+  "id": 1,
+  "method": "getSignatureStatuses",
+  "params": [
+    [
+      "5K1fvW2xY3zZ4aA5bB6cC7dD8eE9fF0gG1hH2iI3jJ4kK5lL6mM7nN8oO9pP0qQ1rR2sS3tT4uU5vV6wW7xX8yY9zZ"
+    ]
+  ]
+}
+
+
+### ============================================================================
+### 6. POST /solana/rpc - Get Account Info
+### ============================================================================
+
+POST {{@api}}/solana/rpc
+Content-Type: application/json
+
+{
+  "jsonrpc": "2.0",
+  "id": 1,
+  "method": "getAccountInfo",
+  "params": [
+    "4Nd1m1Q5WJGj5CqPKYrZL2g4X2Y8Z3A4B5C6D7E8",
+    { "encoding": "jsonParsed" }
+  ]
+}
+
+
+### ============================================================================
+### 7. POST /solana/rpc - Get Token Accounts by Owner
+### ============================================================================
+
+POST {{@api}}/solana/rpc
+Content-Type: application/json
+
+{
+  "jsonrpc": "2.0",
+  "id": 1,
+  "method": "getTokenAccountsByOwner",
+  "params": [
+    "4Nd1m1Q5WJGj5CqPKYrZL2g4X2Y8Z3A4B5C6D7E8",
+    { "mint": "D8TwbwGGmyucrxPB9uscait27caVgeqYHPpyN3XXjUX3" },
+    { "encoding": "jsonParsed" }
+  ]
+}
+
+
+### ============================================================================
+### 8. POST /solana/rpc - Get Minimum Balance for Rent Exemption
+### ============================================================================
+
+POST {{@api}}/solana/rpc
+Content-Type: application/json
+
+{
+  "jsonrpc": "2.0",
+  "id": 1,
+  "method": "getMinimumBalanceForRentExemption",
+  "params": [165]
+}
+

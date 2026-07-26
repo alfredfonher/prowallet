@@ -1,0 +1,144 @@
+### ============================================================================
+### EXCHANGE ENDPOINTS
+### ============================================================================
+### Operaciones de intercambio y precios
+
+@api = https://servicioshilda.orioncaribe.com/api/v1
+@accessToken = your_jwt_token_here
+@tokenMint = D8TwbwGGmyucrxPB9uscait27caVgeqYHPpyN3XXjUX3
+
+### ============================================================================
+### 1. GET /exchange/solPriceCached - Get Cached SOL Price
+### ============================================================================
+### Obtiene el precio de SOL en caché
+### NO requiere autenticación
+
+GET {{@api}}/exchange/solPriceCached
+
+### Response should be 200 OK with:
+### {
+###   "success": true,
+###   "solPriceUsd": 150.00,
+###   "source": "coingecko",
+###   "timestamp": "2024-01-01T12:00:00Z"
+### }
+
+
+### ============================================================================
+### 2. GET /exchange/token-info - Get Token Information
+### ============================================================================
+### Obtiene información del token GAPC en Solana
+
+GET {{@api}}/exchange/token-info?mint={{@tokenMint}}
+
+### Response should be 200 OK with:
+### {
+###   "success": true,
+###   "mint": "...",
+###   "name": "ProWallet",
+###   "symbol": "GAPC",
+###   "decimals": 9,
+###   "supply": "...",
+###   "holders": "..."
+### }
+
+
+### ============================================================================
+### 3. GET /exchange/liquidity - Get Liquidity Information
+### ============================================================================
+### Obtiene información de liquidez del token
+
+GET {{@api}}/exchange/liquidity?mint={{@tokenMint}}
+
+### Response should be 200 OK with liquidity data
+
+
+### ============================================================================
+### 4. POST /exchange/swap - Perform Token Swap
+### ============================================================================
+### Realiza intercambio de tokens (si está implementado)
+
+POST {{@api}}/exchange/swap
+Content-Type: application/json
+Authorization: Bearer {{@accessToken}}
+
+{
+  "inputMint": "So11111111111111111111111111111111111111112",
+  "outputMint": "{{@tokenMint}}",
+  "inputAmount": 1000000,
+  "slippageTolerance": 0.05
+}
+
+### Response should be 200 OK with swap transaction
+
+
+### ============================================================================
+### 5. POST /exchange/withdraw - Request Token Withdrawal
+### ============================================================================
+### Solicita retiro de tokens a un wallet externo
+### Requiere autenticación
+
+POST {{@api}}/exchange/withdraw
+Content-Type: application/json
+Authorization: Bearer {{@accessToken}}
+
+{
+  "amount": 100,
+  "to": "4Nd1m1Q5WJGj5CqPKYrZL2g4X2Y8Z3A4B5C6D7E8"
+}
+
+### Response should be 200 OK or 202 Accepted with:
+### {
+###   "success": true,
+###   "withdrawalId": "wd_12345",
+###   "status": "pending",
+###   "amount": 100
+### }
+
+
+### ============================================================================
+### 6. GET /exchange/withdraw/status/:withdrawalId - Check Withdrawal Status
+### ============================================================================
+### Verifica estado de un retiro
+
+GET {{@api}}/exchange/withdraw/status/wd_12345
+Authorization: Bearer {{@accessToken}}
+
+### Response should be 200 OK with withdrawal status
+
+
+### ============================================================================
+### 7. GET /exchange/rates - Get Exchange Rates
+### ============================================================================
+### Obtiene tasas de cambio
+
+GET {{@api}}/exchange/rates?from=SOL&to=USD
+
+### Response should be 200 OK with:
+### {
+###   "success": true,
+###   "from": "SOL",
+###   "to": "USD",
+###   "rate": 150.00,
+###   "timestamp": "2024-01-01T12:00:00Z"
+### }
+
+
+### ============================================================================
+### 8. GET /exchange/volume - Get Trading Volume
+### ============================================================================
+### Obtiene volumen de trading
+
+GET {{@api}}/exchange/volume?period=24h
+
+### Response should be 200 OK with volume data
+
+
+### ============================================================================
+### 9. GET /exchange/config - Get Exchange Configuration
+### ============================================================================
+### Obtiene configuración del exchange
+
+GET {{@api}}/exchange/config
+
+### Response should be 200 OK with configuration

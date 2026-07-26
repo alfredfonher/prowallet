@@ -1,0 +1,71 @@
+### 📄 PURCHASE - Confirmar Compra
+### POST /api/v1/purchase/confirm/:transactionId
+### Confirma una transacción de compra con firma de blockchain
+### Documentación: Valida firma y completa la transacción
+
+@baseUrl = https://servicioshilda.orioncaribe.com/api/v1
+@transactionId = 123e4567-e89b-12d3-a456-426614174000
+@signature = 4UVJ9k7c9V8K2m5X9p2N3Q4R5S6T7U8V9W0X1Y2Z3a4b5c6d7e8f9g0h1i2j3k4l5m6n7o8p9q
+
+###
+# Confirmar compra con firma de SOL
+POST {{baseUrl}}/purchase/confirm/{{transactionId}}
+Content-Type: application/json
+Accept: application/json
+
+{
+  "signature": "{{signature}}"
+}
+
+###
+# Confirmar compra con ID de pago alternativo (Stripe)
+POST {{baseUrl}}/purchase/confirm/{{transactionId}}
+Content-Type: application/json
+Accept: application/json
+
+{
+  "signature": "{{signature}}",
+  "paymentId": "pi_1234567890abcdefg"
+}
+
+###
+# Confirmar compra con metadata adicional
+POST {{baseUrl}}/purchase/confirm/{{transactionId}}
+Content-Type: application/json
+Accept: application/json
+
+{
+  "signature": "{{signature}}",
+  "metadata": {
+    "clientVersion": "1.0.0",
+    "network": "devnet",
+    "userAgent": "Mozilla/5.0..."
+  }
+}
+
+###
+# RESPUESTA ESPERADA (200 OK):
+# {
+#   "success": true,
+#   "code": 200,
+#   "message": "Compra confirmada exitosamente",
+#   "data": {
+#     "transactionId": "123e4567-e89b-12d3-a456-426614174000",
+#     "status": "completed",
+#     "walletAddress": "11111111111111111111111111111111",
+#     "tokenAmount": 100,
+#     "signature": "4UVJ9k7c9V8K2m5X9p2N3Q4R5S6T7U8V9W0X1Y2Z3a4b5c6d7e8f9g0h1i2j3k4l5m6n7o8p9q",
+#     "onChainStatus": "confirmed",
+#     "completedAt": "2024-12-07T10:30:45Z"
+#   }
+# }
+
+###
+# ERRORES POSIBLES:
+# 400:
+#   - Transacción no encontrada
+#   - Firma inválida
+#   - Transacción ya confirmada
+# 404: Transaction ID no existe
+# 429: Rate limit excedido
+# 500: Error al validar en blockchain

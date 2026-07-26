@@ -1,0 +1,418 @@
+{
+  "project_name": "ProWallet Trading Platform",
+  "project_description": "A production-ready cryptocurrency trading platform built on the Solana blockchain, enabling users to purchase, transfer, and manage ProWallet (GAPC) tokens with comprehensive wallet integration and multiple payment methods.",
+  "tech_stack": {
+    "backend": {
+      "framework": "Express.js",
+      "language": "TypeScript",
+      "database": "PostgreSQL with Prisma ORM",
+      "caching": "Redis",
+      "blockchain": "Solana with Anchor Framework",
+      "authentication": "JWT with wallet-based authentication",
+      "real_time": "Socket.io",
+      "api_docs": "Swagger/OpenAPI",
+      "testing": "Vitest with 80% coverage thresholds",
+      "payment_processors": ["Stripe", "Coinbase Commerce", "CoinGate"]
+    },
+    "frontend": {
+      "framework": "Next.js 16",
+      "language": "TypeScript",
+      "ui_library": "React 19",
+      "styling": "Tailwind CSS v4 with Radix UI components",
+      "state_management": "Zustand",
+      "forms": "React Hook Form with Zod validation",
+      "blockchain": "@solana/web3.js with wallet adapters",
+      "testing": "Vitest with jsdom environment"
+    },
+    "infrastructure": {
+      "containerization": "Docker with docker-compose",
+      "package_manager": "pnpm with workspace configuration",
+      "build_orchestration": "Turbo",
+      "database": "PostgreSQL with Redis caching",
+      "network_support": "Solana mainnet-beta and devnet"
+    }
+  },
+  "core_features": [
+    {
+      "name": "Token Trading Platform",
+      "description": "Buy ProWallet tokens using SOL, USDC, or fiat payment methods with bonding curve pricing",
+      "key_functionality": [
+        "Real-time pricing with dynamic bonding curve calculations",
+        "Multiple payment processors (Stripe, Coinbase, CoinGate)",
+        "Complete transaction lifecycle tracking"
+      ]
+    },
+    {
+      "name": "Wallet Integration",
+      "description": "Multiple Solana wallet adapters with secure transaction signing",
+      "key_functionality": [
+        "Wallet-based authentication with JWT tokens",
+        "Secure transaction signing on client-side",
+        "Real-time wallet balance updates"
+      ]
+    },
+    {
+      "name": "Transfer System",
+      "description": "P2P token transfers with address book management",
+      "key_functionality": [
+        "Direct token transfers between users",
+        "Save and manage frequently used addresses",
+        "Complete transfer history with status tracking",
+        "Dynamic fee calculation and payment"
+      ]
+    },
+    {
+      "name": "User Management",
+      "description": "Wallet-based login with comprehensive user profiles",
+      "key_functionality": [
+        "Wallet-based login with JWT session management",
+        "User profile and preferences",
+        "Comprehensive purchase and transfer history",
+        "Personal address book for saved recipients"
+      ]
+    },
+    {
+      "name": "Admin Features",
+      "description": "Administrative functions for system management",
+      "key_functionality": [
+        "NFT and token metadata administration",
+        "User account administration",
+        "Transaction and system health monitoring",
+        "Dynamic system configuration"
+      ]
+    },
+    {
+      "name": "Price Service",
+      "description": "Real-time pricing with bonding curve calculations",
+      "key_functionality": [
+        "Live token price updates",
+        "Mathematical price calculation based on supply/demand",
+        "Comprehensive market statistics and analytics",
+        "Historical price data and charts"
+      ]
+    }
+  ],
+  "api_endpoints": [
+    {
+      "category": "Authentication",
+      "path": "/api/v1/auth",
+      "endpoints": [
+        {
+          "method": "POST",
+          "path": "/login-wallet",
+          "description": "Wallet authentication"
+        },
+        {
+          "method": "POST",
+          "path": "/refresh",
+          "description": "JWT token refresh"
+        },
+        {
+          "method": "POST",
+          "path": "/logout",
+          "description": "Session termination"
+        },
+        {
+          "method": "GET",
+          "path": "/me",
+          "description": "Get current user info"
+        },
+        {
+          "method": "POST",
+          "path": "/request-challenge",
+          "description": "Request auth challenge for wallet"
+        }
+      ]
+    },
+    {
+      "category": "Exchange & Trading",
+      "path": "/api/v1/exchange",
+      "endpoints": [
+        {
+          "method": "POST",
+          "path": "/buyTokens",
+          "description": "Buy PROWALLET tokens"
+        },
+        {
+          "method": "POST",
+          "path": "/sellTokens",
+          "description": "Sell tokens"
+        },
+        {
+          "method": "GET",
+          "path": "/getPrice",
+          "description": "Get current token price"
+        },
+        {
+          "method": "GET",
+          "path": "/history",
+          "description": "Get user transaction history"
+        },
+        {
+          "method": "GET",
+          "path": "/solPrice",
+          "description": "Get SOL/USD price"
+        }
+      ]
+    },
+    {
+      "category": "Transfer",
+      "path": "/api/v1/transfer",
+      "endpoints": [
+        {
+          "method": "POST",
+          "path": "/initiate",
+          "description": "Initiate wallet transfer"
+        },
+        {
+          "method": "POST",
+          "path": "/confirm",
+          "description": "Confirm transfer with signature"
+        },
+        {
+          "method": "POST",
+          "path": "/address",
+          "description": "Add address to address book"
+        },
+        {
+          "method": "GET",
+          "path": "/addresses/:walletAddress",
+          "description": "Get saved addresses"
+        }
+      ]
+    },
+    {
+      "category": "ProWallet Protocol",
+      "path": "/api/v1/prowallet",
+      "endpoints": [
+        {
+          "method": "GET",
+          "path": "/contract-info",
+          "description": "Get smart contract information"
+        },
+        {
+          "method": "GET",
+          "path": "/whitelist",
+          "description": "Get current whitelist"
+        },
+        {
+          "method": "POST",
+          "path": "/whitelist/add",
+          "description": "Add wallet to whitelist (admin)"
+        }
+      ]
+    },
+    {
+      "category": "Health Check",
+      "path": "/api/v1/health",
+      "endpoints": [
+        {
+          "method": "GET",
+          "path": "/",
+          "description": "Basic API health check"
+        },
+        {
+          "method": "GET",
+          "path": "/solana",
+          "description": "Solana network connectivity check"
+        },
+        {
+          "method": "GET",
+          "path": "/deep",
+          "description": "Deep health check of all services"
+        }
+      ]
+    },
+    {
+      "category": "Admin",
+      "path": "/api/v1/admin",
+      "endpoints": [
+        {
+          "method": "GET",
+          "path": "/metadata",
+          "description": "List all admin metadata"
+        },
+        {
+          "method": "PUT",
+          "path": "/metadata/:key",
+          "description": "Update metadata"
+        },
+        {
+          "method": "POST",
+          "path": "/metadata/transfer/to-test",
+          "description": "Admin transfer to test"
+        }
+      ]
+    }
+  ],
+  "database_schema": {
+    "core_tables": [
+      {
+        "name": "Transaction",
+        "purpose": "Core transaction tracking",
+        "key_fields": [
+          "id",
+          "userId",
+          "type",
+          "amount",
+          "status",
+          "mintingStatus",
+          "createdAt"
+        ],
+        "status_tracking": ["pending", "confirmed", "failed", "settled"]
+      },
+      {
+        "name": "MetadataJob",
+        "purpose": "Async metadata processing",
+        "key_fields": ["id", "type", "status", "data", "attempts", "createdAt"],
+        "processing": "Queue-based metadata generation"
+      },
+      {
+        "name": "SavedAddress",
+        "purpose": "User address book",
+        "key_fields": ["id", "userId", "label", "address", "createdAt"],
+        "management": "CRUD operations for saved addresses"
+      },
+      {
+        "name": "WhitelistEntry",
+        "purpose": "Access control",
+        "key_fields": ["id", "address", "isActive", "createdAt"],
+        "control": "Whitelist-based access management"
+      }
+    ]
+  },
+  "testing_requirements": {
+    "backend_testing": {
+      "framework": "Vitest",
+      "coverage_target": "80% for statements, branches, functions, lines",
+      "test_environment": "Node.js",
+      "key_test_areas": [
+        "Authentication flows (wallet-auth, JWT service)",
+        "Purchase operations (confirm, settle, history)",
+        "Transaction handling (send-transaction, transfers)",
+        "Services (Redis, price, Solana operations)",
+        "Integration tests"
+      ]
+    },
+    "frontend_testing": {
+      "framework": "Vitest with jsdom",
+      "key_test_areas": [
+        "Address book functionality",
+        "Authentication context",
+        "Purchase hooks and services",
+        "Transaction sending",
+        "Environment configuration"
+      ]
+    },
+    "required_test_categories": [
+      {
+        "name": "Unit Tests",
+        "backend_tests": [
+          "Service layer tests (price, Redis, Solana operations)",
+          "Controller tests for all API endpoints",
+          "Middleware tests (authentication, validation, error handling)",
+          "Database model tests (Prisma operations)",
+          "Utility function tests (helpers, validators, formatters)"
+        ],
+        "frontend_tests": [
+          "Component tests for all UI components",
+          "Hook tests for custom React hooks",
+          "Service tests for API client functions",
+          "Utility function tests (formatters, validators)",
+          "Context provider tests (authentication, wallet)"
+        ]
+      },
+      {
+        "name": "Integration Tests",
+        "api_integration": [
+          "End-to-end API workflow tests",
+          "Database integration tests",
+          "Redis caching integration tests",
+          "Solana blockchain integration tests",
+          "Payment processor integration tests"
+        ],
+        "frontend_integration": [
+          "Page-level integration tests",
+          "API client integration tests",
+          "Wallet integration tests",
+          "Form submission integration tests",
+          "Navigation integration tests"
+        ]
+      },
+      {
+        "name": "End-to-End Tests",
+        "user_journeys": [
+          "Complete purchase flow (wallet connect → purchase → confirmation)",
+          "Complete transfer flow (login → transfer → confirmation)",
+          "Address book management (add → edit → delete → use)",
+          "Authentication flow (wallet connect → login → logout)",
+          "Admin workflow (login → metadata management → user management)"
+        ]
+      },
+      {
+        "name": "Security Tests",
+        "authentication_security": [
+          "JWT token validation tests",
+          "Wallet signature verification tests",
+          "Session management tests",
+          "Authorization tests (role-based access)"
+        ],
+        "api_security": [
+          "Input validation tests",
+          "SQL injection prevention tests",
+          "XSS prevention tests",
+          "Rate limiting tests",
+          "CORS configuration tests"
+        ],
+        "blockchain_security": [
+          "Transaction validation tests",
+          "Smart contract interaction tests",
+          "Wallet security tests",
+          "Private key handling tests"
+        ]
+      }
+    ]
+  },
+  "quality_gates": {
+    "code_quality": {
+      "typescript": "Strict mode with comprehensive type coverage",
+      "eslint": "Custom ESLint configuration with React and Node rules",
+      "prettier": "Consistent code formatting",
+      "husky": "Pre-commit hooks for code quality",
+      "lint_staged": "Staged file linting and formatting"
+    },
+    "testing_standards": {
+      "coverage_requirements": "Minimum 80% coverage for all code",
+      "test_quality": "Meaningful test assertions with proper setup/teardown",
+      "test_organization": "Logical test structure with clear descriptions",
+      "mock_quality": "Realistic mocks that simulate production behavior"
+    },
+    "documentation_standards": {
+      "api_documentation": "Comprehensive OpenAPI/Swagger documentation",
+      "code_documentation": "JSDoc comments for public functions",
+      "readme_documentation": "Clear setup and deployment instructions",
+      "architecture_documentation": "System design and decision records"
+    }
+  },
+  "deployment_config": {
+    "docker": {
+      "setup": "Multi-service setup with PostgreSQL, Redis, API, Web services",
+      "production_ready": "Health checks, proper networking, volume management",
+      "environment_specific": "Separate configurations for mainnet/devnet",
+      "optimization": "Multi-stage builds with cleanup"
+    },
+    "build_process": {
+      "turbo_managed": "Dependency resolution and parallel builds",
+      "api_build": "TypeScript compilation with Prisma client generation",
+      "web_build": "Next.js production build with optimization",
+      "package_management": "pnpm workspace with lock file"
+    },
+    "environment_variables": {
+      "comprehensive_config": "100+ configuration variables",
+      "network_support": "Mainnet-beta and devnet configurations",
+      "rpc_providers": "Helius with RPC Pool fallback",
+      "payment_integration": "Stripe, Coinbase, CoinGate configurations",
+      "feature_flags": "Test modes, whitelist controls, mock data"
+    }
+  }
+}
