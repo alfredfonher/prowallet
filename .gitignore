@@ -9,6 +9,17 @@ node_modules/
 .env.*.local
 .env.docker
 .env.docker.local
+!.env*.example
+!**/.env*.example
+/apps/api/.env.devnet
+/apps/api/.env.devnet.test
+/apps/api/.env.mainnet
+/apps/web/.env.devnet
+/apps/web/.env.mainnet
+
+# Local Solana keypairs
+/apps/api/idl/prowallet.json
+/assets/comprador1.json
 
 # Build outputs
 .next/
@@ -29,9 +40,6 @@ coverage/
 .opencode/
 *.db
 *.db-journal
-
-# Assets (dev resources, not code)
-assets/
 
 # OS / Editor
 .DS_Store
